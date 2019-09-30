@@ -1,0 +1,4 @@
+*.o
+libpropcalc.so
+cpptest
+ctest
