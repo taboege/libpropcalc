@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
 	printf("%s\n", str);
 	free(str);
 
-	propform_t tmp1 = propcalc_formula_not(fm);
+	propform_t tmp1 = propcalc_formula_neg(fm);
 	propform_t tmp2 = propcalc_formula_impl(fm1, fm2);
 	propform_t tmp3 = propcalc_formula_and(tmp1, tmp2);
 

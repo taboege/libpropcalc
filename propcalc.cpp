@@ -34,7 +34,7 @@ char *propcalc_formula_pn(const propform_t fm) {
 	return strdup(DEFORM(fm)->to_pn().c_str());
 }
 
-propform_t propcalc_formula_not(const propform_t rhs) {
+propform_t propcalc_formula_neg(const propform_t rhs) {
 	return NEWREFORM(~*DEFORM(rhs));
 }
 
