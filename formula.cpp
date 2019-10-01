@@ -84,6 +84,10 @@ struct token {
 };
 
 static int next_token(const char *&s, token& tok) {
+	/* Skip whitespace */
+	while (isblank(*s))
+		s++;
+
 	if (!*s) {
 		tok.type = TOK_EOF;
 		return 0;
