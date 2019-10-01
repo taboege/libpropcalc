@@ -43,11 +43,11 @@ Ast::Sym::Sym(const char *s, size_t len) :
 { }
 
 std::string Ast::Sym::to_pn(void) const {
-	return str;
+	return "[" + str + "]";
 }
 
 std::string Ast::Sym::to_rpn(void) const {
-	return str;
+	return "[" + str + "]";
 }
 
 Ast::Not::Not(shared_ptr<Ast> rhs) :
