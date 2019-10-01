@@ -18,6 +18,18 @@ using namespace std;
 
 namespace Propcalc {
 
+Ast::Const::Const(bool value) :
+	value(value)
+{ }
+
+std::string Ast::Const::to_pn(void) const {
+	return value ? "\\T" : "\\F";
+}
+
+std::string Ast::Const::to_rpn(void) const {
+	return value ? "\\T" : "\\F";
+}
+
 Ast::Var::Var(unsigned int nr) :
 	nr(nr)
 { }

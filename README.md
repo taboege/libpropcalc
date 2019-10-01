@@ -9,18 +9,20 @@ of in Perl.
 
 **v0.1:**
 - [X] Formula parsing and printing
-- [ ] Conversion AST ↔ PN ↔ RPN
 - [ ] Evaluation and truth tables
 - [ ] JIT compilation support
 - [ ] CNF conversion (truth table / rewriting / Tseytin)
 - [ ] DIMACS import/export
+- [ ] Documentation and tests
 
 **v0.2:**
 - [ ] SAT, #SAT and AllSAT solver
 - [ ] BDD and ZDD support
+- [ ] Documentation and tests
 
 **v0.3:**
 - [ ] Parallel SAT solvers
+- [ ] Documentation and tests
 
 ## Description
 

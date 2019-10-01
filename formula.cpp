@@ -28,6 +28,7 @@ using namespace std;
 namespace Propcalc {
 
 enum optype {
+	OP_CONST,    /* Constant       */
 	OP_ID,       /* Projection     */
 	OP_SYM,      /* Symbol         */
 	OP_NOT,      /* Negation       */
@@ -50,15 +51,16 @@ static const struct op OPS[] = {
 	/* XXX: No associativity information because this parser has
 	 * very limited scope and everything can be supposed to be
 	 * right-associative. */
-	[OP_ID]   = { .prec = 20, .arity = 0, .type = OP_ID   },
-	[OP_SYM]  = { .prec = 20, .arity = 0, .type = OP_SYM  },
-	[OP_NOT]  = { .prec = 10, .arity = 1, .type = OP_NOT  },
-	[OP_AND]  = { .prec =  8, .arity = 2, .type = OP_AND  },
-	[OP_OR]   = { .prec =  6, .arity = 2, .type = OP_OR   },
-	[OP_IMPL] = { .prec =  4, .arity = 2, .type = OP_IMPL },
-	[OP_EQV]  = { .prec =  2, .arity = 2, .type = OP_EQV  },
-	[OP_XOR]  = { .prec =  2, .arity = 2, .type = OP_XOR  },
-	[OP_OPAR] = { .prec = -1, .arity = 0, .type = OP_OPAR },
+	[OP_CONST] = { .prec = 20, .arity = 0, .type = OP_CONST },
+	[OP_ID]    = { .prec = 20, .arity = 0, .type = OP_ID    },
+	[OP_SYM]   = { .prec = 20, .arity = 0, .type = OP_SYM   },
+	[OP_NOT]   = { .prec = 10, .arity = 1, .type = OP_NOT   },
+	[OP_AND]   = { .prec =  8, .arity = 2, .type = OP_AND   },
+	[OP_OR]    = { .prec =  6, .arity = 2, .type = OP_OR    },
+	[OP_IMPL]  = { .prec =  4, .arity = 2, .type = OP_IMPL  },
+	[OP_EQV]   = { .prec =  2, .arity = 2, .type = OP_EQV   },
+	[OP_XOR]   = { .prec =  2, .arity = 2, .type = OP_XOR   },
+	[OP_OPAR]  = { .prec = -1, .arity = 0, .type = OP_OPAR  },
 };
 
 enum toktype {
@@ -93,9 +95,9 @@ static int next_token(const char *&s, token& tok) {
 		return 0;
 	}
 
-	if (*s == 'T' || *s == 'F') {
+	if (!strncmp(s, "\\T", 2) || !strncmp(s, "\\F", 2)) {
 		tok.type = TOK_CONST;
-		tok.val = *s == 'T';
+		tok.val = *++s == 'T';
 		s++;
 		return 1;
 	}
@@ -118,6 +120,17 @@ static int next_token(const char *&s, token& tok) {
 		tok.sym.s = ++s;
 		tok.sym.len = 0;
 		while (*s++ != ']') {
+			tok.sym.len++;
+		}
+		return 1;
+	}
+
+	if (isalpha(*s)) {
+		tok.type = TOK_SYM;
+		tok.sym.s = s++;
+		tok.sym.len = 1;
+		while (isalnum(*s) || *s == '_') {
+			s++;
 			tok.sym.len++;
 		}
 		return 1;
@@ -211,6 +224,10 @@ shared_ptr<Ast> parse(const char *s) {
 		shared_ptr<Ast> ast;
 
 		switch (tok.type) {
+		case TOK_CONST:
+			astdq.push_back(make_shared<Ast::Const>(tok.val));
+			break;
+
 		case TOK_VAR:
 			astdq.push_back(make_shared<Ast::Var>(tok.var));
 			break;

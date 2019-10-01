@@ -28,6 +28,7 @@ namespace Propcalc {
 		virtual std::string to_pn(void)  const = 0;
 		virtual std::string to_rpn(void) const = 0;
 
+		class Const;
 		class Var;
 		class Sym;
 		class Not;
@@ -36,6 +37,16 @@ namespace Propcalc {
 		class Impl;
 		class Eqv;
 		class Xor;
+	};
+
+	class Ast::Const : public Ast {
+	public:
+		bool value;
+
+		Const(bool value);
+
+		virtual std::string to_pn(void)  const;
+		virtual std::string to_rpn(void) const;
 	};
 
 	class Ast::Var : public Ast {
