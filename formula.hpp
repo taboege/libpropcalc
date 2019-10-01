@@ -23,9 +23,17 @@ namespace Propcalc {
 
 	public:
 		Formula(std::string fm);
+		Formula(std::shared_ptr<Ast> root);
 
 		std::string to_rpn(void) const;
 		std::string to_pn(void)  const;
+
+		Formula operator~(void);
+		Formula operator&(const Formula& rhs);
+		Formula operator|(const Formula& rhs);
+		Formula operator>>(const Formula& rhs);
+		Formula operator==(const Formula& rhs);
+		Formula operator^(const Formula& rhs);
 	};
 }
 

@@ -292,12 +292,40 @@ Formula::Formula(string fm) {
 	root = parse(fm.c_str());
 }
 
+Formula::Formula(shared_ptr<Ast> root) :
+	root(root)
+{ }
+
 string Formula::to_rpn(void) const {
 	return root->to_rpn();
 }
 
 string Formula::to_pn(void) const {
 	return root->to_pn();
+}
+
+Formula Formula::operator~(void) {
+	return Formula(make_shared<Ast::Not>(this->root));
+}
+
+Formula Formula::operator&(const Formula& rhs) {
+	return Formula(make_shared<Ast::And>(this->root, rhs.root));
+}
+
+Formula Formula::operator|(const Formula& rhs) {
+	return Formula(make_shared<Ast::Or>(this->root, rhs.root));
+}
+
+Formula Formula::operator>>(const Formula& rhs) {
+	return Formula(make_shared<Ast::Impl>(this->root, rhs.root));
+}
+
+Formula Formula::operator==(const Formula& rhs) {
+	return Formula(make_shared<Ast::Eqv>(this->root, rhs.root));
+}
+
+Formula Formula::operator^(const Formula& rhs) {
+	return Formula(make_shared<Ast::Xor>(this->root, rhs.root));
 }
 
 } /* namespace Propcalc */
