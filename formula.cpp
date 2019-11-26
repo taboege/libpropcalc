@@ -29,8 +29,7 @@ namespace Propcalc {
 
 enum optype {
 	OP_CONST,    /* Constant       */
-	OP_ID,       /* Projection     */
-	OP_SYM,      /* Symbol         */
+	OP_VAR,      /* Symbol         */
 	OP_NOT,      /* Negation       */
 	OP_AND,      /* Conjunction    */
 	OP_OR,       /* Disjunction    */
@@ -51,23 +50,22 @@ static const struct op OPS[] = {
 	/* XXX: No associativity information because this parser has
 	 * very limited scope and everything can be supposed to be
 	 * right-associative. */
+	/* FIXME: Should use ast.hpp enum classes! */
 	[OP_CONST] = { .prec = 20, .arity = 0, .type = OP_CONST },
-	[OP_ID]    = { .prec = 20, .arity = 0, .type = OP_ID    },
-	[OP_SYM]   = { .prec = 20, .arity = 0, .type = OP_SYM   },
-	[OP_NOT]   = { .prec = 10, .arity = 1, .type = OP_NOT   },
-	[OP_AND]   = { .prec =  8, .arity = 2, .type = OP_AND   },
-	[OP_OR]    = { .prec =  6, .arity = 2, .type = OP_OR    },
-	[OP_IMPL]  = { .prec =  4, .arity = 2, .type = OP_IMPL  },
-	[OP_EQV]   = { .prec =  2, .arity = 2, .type = OP_EQV   },
-	[OP_XOR]   = { .prec =  2, .arity = 2, .type = OP_XOR   },
+	[OP_VAR]   = { .prec = 20, .arity = 0, .type = OP_VAR   },
+	[OP_NOT]   = { .prec = 14, .arity = 1, .type = OP_NOT   },
+	[OP_AND]   = { .prec = 12, .arity = 2, .type = OP_AND   },
+	[OP_OR]    = { .prec = 10, .arity = 2, .type = OP_OR    },
+	[OP_IMPL]  = { .prec =  8, .arity = 2, .type = OP_IMPL  },
+	[OP_EQV]   = { .prec =  6, .arity = 2, .type = OP_EQV   },
+	[OP_XOR]   = { .prec =  6, .arity = 2, .type = OP_XOR   },
 	[OP_OPAR]  = { .prec = -1, .arity = 0, .type = OP_OPAR  },
 };
 
 enum toktype {
 	TOK_EOF = 0, /* End of file    */
 	TOK_CONST,   /* Constant       */
-	TOK_VAR,     /* Variable       */
-	TOK_SYM,     /* A [...] symbol */
+	TOK_VAR,     /* A [...] symbol */
 	TOK_OP,      /* An operator    */
 	TOK_PAREN,   /* Parenthesis    */
 };
@@ -102,21 +100,8 @@ static int next_token(const char *&s, token& tok) {
 		return 1;
 	}
 
-	if (isdigit(*s)) {
-		tok.type = TOK_VAR;
-		tok.var = 0;
-		while (isdigit(*s)) {
-			tok.var *= 10;
-			tok.var += *s - '0';
-			s++;
-		}
-		if (!tok.var)
-			throw "invalid var";
-		return 1;
-	}
-
 	if (*s == '[') {
-		tok.type = TOK_SYM;
+		tok.type = TOK_VAR;
 		tok.sym.s = ++s;
 		tok.sym.len = 0;
 		while (*s++ != ']') {
@@ -125,8 +110,8 @@ static int next_token(const char *&s, token& tok) {
 		return 1;
 	}
 
-	if (isalpha(*s)) {
-		tok.type = TOK_SYM;
+	if (isalnum(*s)) {
+		tok.type = TOK_VAR;
 		tok.sym.s = s++;
 		tok.sym.len = 1;
 		while (isalnum(*s) || *s == '_') {
@@ -215,7 +200,7 @@ static void reduce(optype op, deque<shared_ptr<Ast>>& astdq) {
 	}
 }
 
-shared_ptr<Ast> parse(const char *s) {
+shared_ptr<Ast> parse(const char *s, shared_ptr<Domain> domain) {
 	deque<shared_ptr<Ast>> astdq;
 	stack<optype> ops;
 
@@ -229,11 +214,7 @@ shared_ptr<Ast> parse(const char *s) {
 			break;
 
 		case TOK_VAR:
-			astdq.push_back(make_shared<Ast::Var>(tok.var));
-			break;
-
-		case TOK_SYM:
-			astdq.push_back(make_shared<Ast::Sym>(tok.sym.s, tok.sym.len));
+			astdq.push_back(domain->get(string(tok.sym.s, tok.sym.len)));
 			break;
 
 		case TOK_OP:
@@ -288,44 +269,60 @@ shared_ptr<Ast> parse(const char *s) {
 	}
 }
 
-Formula::Formula(string fm) {
-	root = parse(fm.c_str());
-}
+Formula::Formula(string fm, shared_ptr<Domain> domain) :
+	domain(domain),
+	root(parse(fm.c_str(), domain))
+{ }
 
-Formula::Formula(shared_ptr<Ast> root) :
+Formula::Formula(shared_ptr<Ast> root, shared_ptr<Domain> domain) :
+	domain(domain),
 	root(root)
 { }
 
-string Formula::to_rpn(void) const {
-	return root->to_rpn();
+string Formula::to_infix(void) const {
+	return root->to_infix();
 }
 
-string Formula::to_pn(void) const {
-	return root->to_pn();
+string Formula::to_prefix(void) const {
+	return root->to_prefix();
+}
+
+string Formula::to_postfix(void) const {
+	return root->to_postfix();
 }
 
 Formula Formula::operator~(void) {
-	return Formula(make_shared<Ast::Not>(this->root));
+	return Formula(make_shared<Ast::Not>(root), domain);
 }
 
 Formula Formula::operator&(const Formula& rhs) {
-	return Formula(make_shared<Ast::And>(this->root, rhs.root));
+	if (domain.get() != rhs.domain.get())
+		throw "domains must be equal";
+	return Formula(make_shared<Ast::And>(root, rhs.root), domain);
 }
 
 Formula Formula::operator|(const Formula& rhs) {
-	return Formula(make_shared<Ast::Or>(this->root, rhs.root));
+	if (domain.get() != rhs.domain.get())
+		throw "domains must be equal";
+	return Formula(make_shared<Ast::Or>(root, rhs.root), domain);
 }
 
 Formula Formula::operator>>(const Formula& rhs) {
-	return Formula(make_shared<Ast::Impl>(this->root, rhs.root));
+	if (domain.get() != rhs.domain.get())
+		throw "domains must be equal";
+	return Formula(make_shared<Ast::Impl>(root, rhs.root), domain);
 }
 
 Formula Formula::operator==(const Formula& rhs) {
-	return Formula(make_shared<Ast::Eqv>(this->root, rhs.root));
+	if (domain.get() != rhs.domain.get())
+		throw "domains must be equal";
+	return Formula(make_shared<Ast::Eqv>(root, rhs.root), domain);
 }
 
 Formula Formula::operator^(const Formula& rhs) {
-	return Formula(make_shared<Ast::Xor>(this->root, rhs.root));
+	if (domain.get() != rhs.domain.get())
+		throw "domains must be equal";
+	return Formula(make_shared<Ast::Xor>(root, rhs.root), domain);
 }
 
 } /* namespace Propcalc */

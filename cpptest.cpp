@@ -14,13 +14,22 @@ int main(int argc, char* argv[]) {
 	string fmstr(argv[1]);
 	Propcalc::Formula fm(fmstr);
 	Propcalc::Formula fm1("[12|]&[12|3]");
-	Propcalc::Formula fm2("[13|]|[23|]");
+	Propcalc::Formula fm2("[13|]^[23|]");
+	Propcalc::Formula fm3("[12|]");
 
-	cout << fm.to_rpn() << endl;
-	cout << (~fm).to_rpn() << endl;
-	cout << ((fm & fm1) | fm2).to_rpn() << endl;
-	cout << (fm == fm1).to_rpn() << endl;
-	cout << (fm1 >> fm2).to_rpn() << endl;
+	cout << fm.to_postfix() << endl;
+	cout << (~fm).to_postfix() << endl;
+	cout << ((fm & fm1) | fm2).to_postfix() << endl;
+	cout << (fm == fm1).to_postfix() << endl;
+	cout << (fm1 >> fm2).to_postfix() << endl;
+
+	cout << (fm1 | ~fm3).to_infix() << endl;
+	cout << ((fm1 | fm2) & ~~fm3).to_infix() << endl;
+	cout << (fm1 & fm3 & fm2).to_infix() << endl;
+
+	cout << "seen the following variables:" << endl;
+	for (auto& v : Propcalc::DefaultDomain->list())
+		cout << v->to_string() << ": " << Propcalc::DefaultDomain->get_nr(v) << endl;
 
 	return 0;
 }

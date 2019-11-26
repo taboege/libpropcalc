@@ -18,125 +18,114 @@ using namespace std;
 
 namespace Propcalc {
 
-Ast::Const::Const(bool value) :
-	value(value)
-{ }
+/*
+ * Ast::Not
+ */
 
-std::string Ast::Const::to_pn(void) const {
-	return value ? "\\T" : "\\F";
+string Ast::Not::to_infix(void) const {
+	string op = rhs->to_infix();
+	if (rhs->prec() < this->prec())
+		op = "(" + op + ")";
+	return "~" + op;
 }
 
-std::string Ast::Const::to_rpn(void) const {
-	return value ? "\\T" : "\\F";
+string Ast::Not::to_prefix(void) const {
+	return "~ " + rhs->to_prefix();
 }
 
-Ast::Var::Var(unsigned int nr) :
-	nr(nr)
-{ }
-
-std::string Ast::Var::to_pn(void) const {
-	return std::to_string(nr);
+string Ast::Not::to_postfix(void) const {
+	return rhs->to_postfix() + " ~";
 }
 
-std::string Ast::Var::to_rpn(void) const {
-	return std::to_string(nr);
+/*
+ * Ast::And
+ */
+
+static inline string _to_infix(string sym, const Ast* lhs, const Ast* infix, const Ast* rhs) {
+	string op1 = lhs->to_infix();
+	string op2 = rhs->to_infix();
+
+	if (lhs->prec() < infix->prec())
+		op1 = "(" + op1 + ")";
+	if (rhs->prec() < infix->prec())
+		op2 = "(" + op2 + ")";
+	return op1 + " " + sym + " " + op2;
 }
 
-Ast::Sym::Sym(std::string str) :
-	str(str),
-	nr(0),
-	obj(nullptr)
-{ }
-
-Ast::Sym::Sym(const char *s, size_t len) :
-	str(string(s, len)),
-	nr(0),
-	obj(nullptr)
-{ }
-
-std::string Ast::Sym::to_pn(void) const {
-	return "[" + str + "]";
+string Ast::And::to_infix(void) const {
+	return _to_infix("&", lhs.get(), this, rhs.get());
 }
 
-std::string Ast::Sym::to_rpn(void) const {
-	return "[" + str + "]";
+string Ast::And::to_prefix(void) const {
+	return "& " + lhs->to_prefix() + " " + rhs->to_prefix();
 }
 
-Ast::Not::Not(shared_ptr<Ast> rhs) :
-	rhs(rhs)
-{ }
-
-std::string Ast::Not::to_pn(void) const {
-	return "~ " + rhs->to_pn();
+string Ast::And::to_postfix(void) const {
+	return lhs->to_postfix() + " " + rhs->to_postfix() + " &";
 }
 
-std::string Ast::Not::to_rpn(void) const {
-	return rhs->to_rpn() + " ~";
+/*
+ * Ast::Or
+ */
+
+string Ast::Or::to_infix(void) const {
+	return _to_infix("|", lhs.get(), this, rhs.get());
 }
 
-Ast::And::And(shared_ptr<Ast> lhs, shared_ptr<Ast> rhs) :
-	lhs(lhs),
-	rhs(rhs)
-{ }
-
-std::string Ast::And::to_pn(void) const {
-	return "& " + lhs->to_pn() + " " + rhs->to_pn();
+string Ast::Or::to_prefix(void) const {
+	return "| " + lhs->to_prefix() + " " + rhs->to_prefix();
 }
 
-std::string Ast::And::to_rpn(void) const {
-	return lhs->to_rpn() + " " + rhs->to_rpn() + " &";
+string Ast::Or::to_postfix(void) const {
+	return lhs->to_postfix() + " " + rhs->to_postfix() + " |";
 }
 
-Ast::Or::Or(shared_ptr<Ast> lhs, shared_ptr<Ast> rhs) :
-	lhs(lhs),
-	rhs(rhs)
-{ }
+/*
+ * Ast::Impl
+ */
 
-std::string Ast::Or::to_pn(void) const {
-	return "| " + lhs->to_pn() + " " + rhs->to_pn();
+string Ast::Impl::to_infix(void) const {
+	return _to_infix(">", lhs.get(), this, rhs.get());
 }
 
-std::string Ast::Or::to_rpn(void) const {
-	return lhs->to_rpn() + " " + rhs->to_rpn() + " |";
+string Ast::Impl::to_prefix(void) const {
+	return "> " + lhs->to_prefix() + " " + rhs->to_prefix();
 }
 
-Ast::Impl::Impl(shared_ptr<Ast> lhs, shared_ptr<Ast> rhs) :
-	lhs(lhs),
-	rhs(rhs)
-{ }
-
-std::string Ast::Impl::to_pn(void) const {
-	return "> " + lhs->to_pn() + " " + rhs->to_pn();
+string Ast::Impl::to_postfix(void) const {
+	return lhs->to_postfix() + " " + rhs->to_postfix() + " >";
 }
 
-std::string Ast::Impl::to_rpn(void) const {
-	return lhs->to_rpn() + " " + rhs->to_rpn() + " >";
+/*
+ * Ast::Eqv
+ */
+
+string Ast::Eqv::to_infix(void) const {
+	return _to_infix("=", lhs.get(), this, rhs.get());
 }
 
-Ast::Eqv::Eqv(shared_ptr<Ast> lhs, shared_ptr<Ast> rhs) :
-	lhs(lhs),
-	rhs(rhs)
-{ }
-
-std::string Ast::Eqv::to_pn(void) const {
-	return "= " + lhs->to_pn() + " " + rhs->to_pn();
+string Ast::Eqv::to_prefix(void) const {
+	return "= " + lhs->to_prefix() + " " + rhs->to_prefix();
 }
 
-std::string Ast::Eqv::to_rpn(void) const {
-	return lhs->to_rpn() + " " + rhs->to_rpn() + " =";
+string Ast::Eqv::to_postfix(void) const {
+	return lhs->to_postfix() + " " + rhs->to_postfix() + " =";
 }
 
-Ast::Xor::Xor(shared_ptr<Ast> lhs, shared_ptr<Ast> rhs) :
-	lhs(lhs),
-	rhs(rhs)
-{ }
+/*
+ * Ast::Xor
+ */
 
-std::string Ast::Xor::to_pn(void) const {
-	return "^ " + lhs->to_pn() + " " + rhs->to_pn();
+string Ast::Xor::to_infix(void) const {
+	return _to_infix("^", lhs.get(), this, rhs.get());
 }
 
-std::string Ast::Xor::to_rpn(void) const {
-	return lhs->to_rpn() + " " + rhs->to_rpn() + " ^";
+string Ast::Xor::to_prefix(void) const {
+	return "^ " + lhs->to_prefix() + " " + rhs->to_prefix();
+}
+
+string Ast::Xor::to_postfix(void) const {
+	return lhs->to_postfix() + " " + rhs->to_postfix() + " ^";
 }
 
 } /* namespace Propcalc */

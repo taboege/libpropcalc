@@ -16,17 +16,22 @@
 #define PROPCALC_FORMULA_HPP
 
 #include <propcalc/ast.hpp>
+#include <propcalc/variable.hpp>
 
 namespace Propcalc {
+	extern std::shared_ptr<Cache> DefaultDomain;
+
 	class Formula {
-		std::shared_ptr<Ast> root;
+		std::shared_ptr<Domain> domain;
+		std::shared_ptr<Ast>    root;
 
 	public:
-		Formula(std::string fm);
-		Formula(std::shared_ptr<Ast> root);
+		Formula(std::string fm, std::shared_ptr<Domain> domain = DefaultDomain);
+		Formula(std::shared_ptr<Ast> root, std::shared_ptr<Domain> domain = DefaultDomain);
 
-		std::string to_rpn(void) const;
-		std::string to_pn(void)  const;
+		std::string to_infix(void)   const;
+		std::string to_prefix(void)  const;
+		std::string to_postfix(void) const;
 
 		Formula operator~(void);
 		Formula operator&(const Formula& rhs);

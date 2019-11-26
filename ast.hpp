@@ -19,18 +19,49 @@
 #include <memory>
 #include <vector>
 
-#include <iostream>
-
 namespace Propcalc {
 
 	class Ast {
 	public:
-		virtual std::string to_pn(void)  const = 0;
-		virtual std::string to_rpn(void) const = 0;
+		enum class Type {
+			Const, Variable,
+			Not, And, Or,
+			Impl, Eqv, Xor
+		};
 
+		enum class Assoc {
+			Non   = 0x0,
+			Left  = 0x1,
+			Right = 0x2,
+			Both  = Left | Right
+		};
+
+		/*
+		 * Careful! These values must order the same as in the parser's
+		 * operator table in formula.cpp.
+		 */
+		enum class Prec {
+			Tight    = 20,
+			Symbolic = Tight,
+			Notish   = 14,
+			Andish   = 12,
+			Orish    = 10,
+			Implish  = 8,
+			Eqvish   = 6,
+			Xorish   = Eqvish,
+			Loose    = 0
+		};
+
+		virtual Ast::Type  type(void)  const = 0;
+		virtual Ast::Assoc assoc(void) const = 0;
+		virtual Ast::Prec  prec(void)  const = 0;
+
+		virtual std::string to_infix(void)   const = 0;
+		virtual std::string to_prefix(void)  const = 0;
+		virtual std::string to_postfix(void) const = 0;
+
+		/* Variables are extra, see variable.hpp */
 		class Const;
-		class Var;
-		class Sym;
 		class Not;
 		class And;
 		class Or;
@@ -43,43 +74,31 @@ namespace Propcalc {
 	public:
 		bool value;
 
-		Const(bool value);
+		Const(bool value) : value(value) { }
 
-		virtual std::string to_pn(void)  const;
-		virtual std::string to_rpn(void) const;
-	};
+		virtual Ast::Type  type(void)  const { return Ast::Type::Const;    }
+		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Non;     }
+		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Symbolic; }
 
-	class Ast::Var : public Ast {
-	public:
-		unsigned int nr;
-
-		Var(unsigned int nr);
-
-		virtual std::string to_pn(void)  const;
-		virtual std::string to_rpn(void) const;
-	};
-
-	class Ast::Sym : public Ast {
-	public:
-		std::string str;
-		unsigned int nr;
-		void *obj;
-
-		Sym(std::string str);
-		Sym(const char *s, size_t len);
-
-		virtual std::string to_pn(void)  const;
-		virtual std::string to_rpn(void) const;
+		virtual std::string to_string(void)  const { return value ? "\\T" : "\\F"; }
+		virtual std::string to_infix(void)   const { return this->to_string(); }
+		virtual std::string to_prefix(void)  const { return this->to_string(); }
+		virtual std::string to_postfix(void) const { return this->to_string(); }
 	};
 
 	class Ast::Not : public Ast {
 	public:
 		std::shared_ptr<Ast> rhs;
 
-		Not(std::shared_ptr<Ast> rhs);
+		Not(std::shared_ptr<Ast> rhs) : rhs(rhs) { }
 
-		virtual std::string to_pn(void)  const;
-		virtual std::string to_rpn(void) const;
+		virtual Ast::Type  type(void)  const { return Ast::Type::Not;    }
+		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Non;   }
+		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Notish; }
+
+		virtual std::string to_infix(void)   const;
+		virtual std::string to_prefix(void)  const;
+		virtual std::string to_postfix(void) const;
 	};
 
 	class Ast::And : public Ast {
@@ -87,10 +106,15 @@ namespace Propcalc {
 		std::shared_ptr<Ast> lhs;
 		std::shared_ptr<Ast> rhs;
 
-		And(std::shared_ptr<Ast> lhs, std::shared_ptr<Ast> rhs);
+		And(std::shared_ptr<Ast> lhs, std::shared_ptr<Ast> rhs) : lhs(lhs), rhs(rhs) { }
 
-		virtual std::string to_pn(void)  const;
-		virtual std::string to_rpn(void) const;
+		virtual Ast::Type  type(void)  const { return Ast::Type::And;    }
+		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both;  }
+		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Andish; }
+
+		virtual std::string to_infix(void)   const;
+		virtual std::string to_prefix(void)  const;
+		virtual std::string to_postfix(void) const;
 	};
 
 	class Ast::Or : public Ast {
@@ -98,10 +122,15 @@ namespace Propcalc {
 		std::shared_ptr<Ast> lhs;
 		std::shared_ptr<Ast> rhs;
 
-		Or(std::shared_ptr<Ast> lhs, std::shared_ptr<Ast> rhs);
+		Or(std::shared_ptr<Ast> lhs, std::shared_ptr<Ast> rhs) : lhs(lhs), rhs(rhs) { }
 
-		virtual std::string to_pn(void)  const;
-		virtual std::string to_rpn(void) const;
+		virtual Ast::Type  type(void)  const { return Ast::Type::Or;    }
+		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both; }
+		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Orish; }
+
+		virtual std::string to_infix(void)   const;
+		virtual std::string to_prefix(void)  const;
+		virtual std::string to_postfix(void) const;
 	};
 
 	class Ast::Impl : public Ast {
@@ -109,10 +138,15 @@ namespace Propcalc {
 		std::shared_ptr<Ast> lhs;
 		std::shared_ptr<Ast> rhs;
 
-		Impl(std::shared_ptr<Ast> lhs, std::shared_ptr<Ast> rhs);
+		Impl(std::shared_ptr<Ast> lhs, std::shared_ptr<Ast> rhs) : lhs(lhs), rhs(rhs) { }
 
-		virtual std::string to_pn(void)  const;
-		virtual std::string to_rpn(void) const;
+		virtual Ast::Type  type(void)  const { return Ast::Type::Impl;    }
+		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Right;  }
+		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Implish; }
+
+		virtual std::string to_infix(void)   const;
+		virtual std::string to_prefix(void)  const;
+		virtual std::string to_postfix(void) const;
 	};
 
 	class Ast::Eqv : public Ast {
@@ -120,10 +154,15 @@ namespace Propcalc {
 		std::shared_ptr<Ast> lhs;
 		std::shared_ptr<Ast> rhs;
 
-		Eqv(std::shared_ptr<Ast> lhs, std::shared_ptr<Ast> rhs);
+		Eqv(std::shared_ptr<Ast> lhs, std::shared_ptr<Ast> rhs) : lhs(lhs), rhs(rhs) { }
 
-		virtual std::string to_pn(void)  const;
-		virtual std::string to_rpn(void) const;
+		virtual Ast::Type  type(void)  const { return Ast::Type::Eqv;    }
+		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both;  }
+		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Eqvish; }
+
+		virtual std::string to_infix(void)   const;
+		virtual std::string to_prefix(void)  const;
+		virtual std::string to_postfix(void) const;
 	};
 
 	class Ast::Xor : public Ast {
@@ -131,10 +170,15 @@ namespace Propcalc {
 		std::shared_ptr<Ast> lhs;
 		std::shared_ptr<Ast> rhs;
 
-		Xor(std::shared_ptr<Ast> lhs, std::shared_ptr<Ast> rhs);
+		Xor(std::shared_ptr<Ast> lhs, std::shared_ptr<Ast> rhs) : lhs(lhs), rhs(rhs) { }
 
-		virtual std::string to_pn(void)  const;
-		virtual std::string to_rpn(void) const;
+		virtual Ast::Type  type(void)  const { return Ast::Type::Xor;    }
+		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both;  }
+		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Xorish; }
+
+		virtual std::string to_infix(void)   const;
+		virtual std::string to_prefix(void)  const;
+		virtual std::string to_postfix(void) const;
 	};
 }
 

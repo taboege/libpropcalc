@@ -15,9 +15,13 @@
 #ifndef PROPCALC_HPP
 #define PROPCALC_HPP
 
-#define PROPCALC_VERSION	0x000001 /* One byte each API/Major/Minor */
+#define __PROPCALC_MAKE_VERSION(api, major, minor)	\
+	(api << 16 | major << 8 | minor)
+
+#define PROPCALC_VERSION	__PROPCALC_MAKE_VERSION(0, 0, 1)
 
 #include <propcalc/ast.hpp>
+#include <propcalc/variable.hpp>
 #include <propcalc/formula.hpp>
 
 #endif /* PROPCALC_HPP */
