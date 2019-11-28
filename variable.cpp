@@ -26,49 +26,35 @@ namespace Propcalc {
  * Variables used by the Formula parser.
  */
 
-shared_ptr<Cache> DefaultDomain = make_shared<Cache>();
+auto DefaultDomain = make_shared<Cache>();
 
 /*
  * Cache
  */
 
-shared_ptr<Variable> Cache::get(std::string name) {
+const Variable* Cache::get(std::string name) {
 	const std::lock_guard<std::mutex> lock(update);
-	shared_ptr<Variable> var;
+	const Variable* var;
 
 	auto it = cache.find(name);
 	if (it == cache.end()) {
-		var = make_shared<Variable>(name);
-		size_t nr = 1 + cache.size();
-		cache.insert({ name, make_pair(var, nr) });
+		auto uvar = make_unique<Variable>(name);
+		var = uvar.get();
+		cache.insert({ name, move(uvar) });
 	}
 	else {
-		var = it->second.first;
+		var = it->second.get();
 	}
-
 	return var;
 }
 
-vector<shared_ptr<Variable>> Cache::list(void) {
+vector<const Variable*> Cache::list(void) {
 	const std::lock_guard<std::mutex> lock(update);
-	vector<shared_ptr<Variable>> values;
+	vector<const Variable*> values;
 
 	for (auto& pair : cache)
-		values.push_back(pair.second.first);
+		values.push_back(pair.second.get());
 	return values;
-}
-
-size_t Cache::get_nr(string name) {
-	const std::lock_guard<std::mutex> lock(update);
-
-	auto it = cache.find(name);
-	if (it == cache.end())
-		return 0;
-	return it->second.second;
-}
-
-size_t Cache::get_nr(shared_ptr<Variable> var) {
-	return get_nr(var->name);
 }
 
 }

@@ -28,8 +28,9 @@ int main(int argc, char* argv[]) {
 	cout << (fm1 & fm3 & fm2).to_infix() << endl;
 
 	cout << "seen the following variables:" << endl;
+	size_t i = 0;
 	for (auto& v : Propcalc::DefaultDomain->list())
-		cout << v->to_string() << ": " << Propcalc::DefaultDomain->get_nr(v) << endl;
+		cout << v->to_string() << ": " << i++ << endl;
 
 	return 0;
 }

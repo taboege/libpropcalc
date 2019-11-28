@@ -19,12 +19,14 @@
 #include <memory>
 #include <vector>
 
+#include <propcalc/variable.hpp>
+
 namespace Propcalc {
 
 	class Ast {
 	public:
 		enum class Type {
-			Const, Variable,
+			Const, Var,
 			Not, And, Or,
 			Impl, Eqv, Xor
 		};
@@ -60,8 +62,8 @@ namespace Propcalc {
 		virtual std::string to_prefix(void)  const = 0;
 		virtual std::string to_postfix(void) const = 0;
 
-		/* Variables are extra, see variable.hpp */
 		class Const;
+		class Var;
 		class Not;
 		class And;
 		class Or;
@@ -84,6 +86,22 @@ namespace Propcalc {
 		virtual std::string to_infix(void)   const { return this->to_string(); }
 		virtual std::string to_prefix(void)  const { return this->to_string(); }
 		virtual std::string to_postfix(void) const { return this->to_string(); }
+	};
+
+	class Ast::Var : public Ast {
+	public:
+		const Variable *var;
+
+		Var(const Variable *var) : var(var) { }
+
+		virtual Ast::Type  type(void)  const { return Ast::Type::Var;      }
+		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Non;     }
+		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Symbolic; }
+
+		virtual std::string to_string(void)  const { return var->to_string(); }
+		virtual std::string to_infix(void)   const { return var->to_string(); }
+		virtual std::string to_prefix(void)  const { return var->to_string(); }
+		virtual std::string to_postfix(void) const { return var->to_string(); }
 	};
 
 	class Ast::Not : public Ast {

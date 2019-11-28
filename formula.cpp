@@ -214,7 +214,9 @@ shared_ptr<Ast> parse(const char *s, shared_ptr<Domain> domain) {
 			break;
 
 		case TOK_VAR:
-			astdq.push_back(domain->get(string(tok.sym.s, tok.sym.len)));
+			astdq.push_back(make_shared<Ast::Var>(
+				domain->get(string(tok.sym.s, tok.sym.len))
+			));
 			break;
 
 		case TOK_OP:

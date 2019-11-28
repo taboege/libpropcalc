@@ -1,10 +1,10 @@
 CXX = g++
 CC = gcc
 CPPFLAGS += -I.
-CXXFLAGS += -std=c++11 -Wall -Werror -O0 -ggdb
+CXXFLAGS += -std=c++14 -Wall -Werror -O0 -ggdb
 CFLAGS += -Wall -Werror -O0 -ggdb
 
-libpropcalc.so: ast.o variable.o formula.o
+libpropcalc.so: variable.o ast.o formula.o
 #libpropcalc.so: propcalc.o
 	$(CXX) $(CXXFLAGS) -o $@ -shared $(LDFLAGS) $^
 

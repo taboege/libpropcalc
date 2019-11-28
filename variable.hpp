@@ -19,34 +19,23 @@
 #include <memory>
 #include <vector>
 #include <mutex>
-#include <unordered_map>
-
-#include <propcalc/ast.hpp>
+#include <map>
 
 namespace Propcalc {
-	class Variable : public Ast {
+	class Variable {
 	public:
 		std::string name;
 
 		Variable(std::string name) : name(name) { }
 		Variable(const char *s, size_t len) : name(std::string(s, len)) { }
 
-		virtual Ast::Type  type(void)  const { return Ast::Type::Variable; }
-		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Non;     }
-		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Symbolic; }
-
-		virtual std::string to_string(void)  const { return "[" + name + "]";  }
-		virtual std::string to_infix(void)   const { return this->to_string(); }
-		virtual std::string to_prefix(void)  const { return this->to_string(); }
-		virtual std::string to_postfix(void) const { return this->to_string(); }
+		virtual std::string to_string(void) const { return "[" + name + "]"; }
 	};
 
 	class Domain {
 	public:
-		virtual std::shared_ptr<Variable> get(std::string name)   = 0;
-		virtual std::vector<std::shared_ptr<Variable>> list(void) = 0;
-		virtual size_t get_nr(std::string name)                   = 0;
-		virtual size_t get_nr(std::shared_ptr<Variable> var)      = 0;
+		virtual const Variable* get(std::string name)   = 0;
+		virtual std::vector<const Variable*> list(void) = 0;
 
 		/*
 		 * TODO: Tseitin transform wants to introduce new temporary
@@ -63,19 +52,11 @@ namespace Propcalc {
 	class Cache : public Domain {
 	private:
 		std::mutex update;
-		std::unordered_map<
-			std::string,
-			std::pair<
-				std::shared_ptr<Variable>,
-				size_t
-			>
-		> cache;
+		std::map<std::string, std::unique_ptr<Variable>> cache;
 
 	public:
-		virtual std::shared_ptr<Variable> get(std::string name);
-		virtual std::vector<std::shared_ptr<Variable>> list(void);
-		virtual size_t get_nr(std::string name);
-		virtual size_t get_nr(std::shared_ptr<Variable> var);
+		virtual const Variable* get(std::string name);
+		virtual std::vector<const Variable *> list(void);
 	};
 }
 
