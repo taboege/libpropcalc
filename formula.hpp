@@ -17,6 +17,7 @@
 
 #include <propcalc/ast.hpp>
 #include <propcalc/variable.hpp>
+#include <propcalc/assignment.hpp>
 
 namespace Propcalc {
 	extern std::shared_ptr<Cache> DefaultDomain;

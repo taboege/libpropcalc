@@ -41,6 +41,7 @@ const Variable* Cache::get(std::string name) {
 		auto uvar = make_unique<Variable>(name);
 		var = uvar.get();
 		cache.insert({ name, move(uvar) });
+		order.push_back(var);
 	}
 	else {
 		var = it->second.get();
@@ -50,11 +51,7 @@ const Variable* Cache::get(std::string name) {
 
 vector<const Variable*> Cache::list(void) {
 	const std::lock_guard<std::mutex> lock(access);
-	vector<const Variable*> values;
-
-	for (auto& pair : cache)
-		values.push_back(pair.second.get());
-	return values;
+	return order;
 }
 
 vector<const Variable*> Cache::sort(unordered_set<const Variable*>& pile) {
@@ -62,8 +59,7 @@ vector<const Variable*> Cache::sort(unordered_set<const Variable*>& pile) {
 	vector<const Variable*> vec;
 
 	/* Amortized linear in domain size */
-	for (auto& pair : cache) {
-		const Variable* v = pair.second.get();
+	for (auto& v : order) {
 		if (pile.count(v) > 0)
 			vec.push_back(v);
 	}

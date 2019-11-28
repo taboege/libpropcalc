@@ -58,6 +58,7 @@ namespace Propcalc {
 	private:
 		std::mutex access;
 		std::map<std::string, std::unique_ptr<Variable>> cache;
+		std::vector<const Variable*> order;
 
 	public:
 		virtual const Variable* get(std::string name);
