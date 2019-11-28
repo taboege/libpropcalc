@@ -58,6 +58,8 @@ namespace Propcalc {
 		virtual Ast::Assoc assoc(void) const = 0;
 		virtual Ast::Prec  prec(void)  const = 0;
 
+		virtual void fill_vars(std::unordered_set<const Variable*>& pile) const = 0;
+
 		virtual std::string to_infix(void)   const = 0;
 		virtual std::string to_prefix(void)  const = 0;
 		virtual std::string to_postfix(void) const = 0;
@@ -82,6 +84,8 @@ namespace Propcalc {
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Non;     }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Symbolic; }
 
+		virtual void fill_vars(std::unordered_set<const Variable*>& pile) const { }
+
 		virtual std::string to_string(void)  const { return value ? "\\T" : "\\F"; }
 		virtual std::string to_infix(void)   const { return this->to_string(); }
 		virtual std::string to_prefix(void)  const { return this->to_string(); }
@@ -97,6 +101,10 @@ namespace Propcalc {
 		virtual Ast::Type  type(void)  const { return Ast::Type::Var;      }
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Non;     }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Symbolic; }
+
+		virtual void fill_vars(std::unordered_set<const Variable*>& pile) const {
+			pile.insert(var);
+		}
 
 		virtual std::string to_string(void)  const { return var->to_string(); }
 		virtual std::string to_infix(void)   const { return var->to_string(); }
@@ -114,6 +122,10 @@ namespace Propcalc {
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Non;   }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Notish; }
 
+		virtual void fill_vars(std::unordered_set<const Variable*>& pile) const {
+			rhs->fill_vars(pile);
+		}
+
 		virtual std::string to_infix(void)   const;
 		virtual std::string to_prefix(void)  const;
 		virtual std::string to_postfix(void) const;
@@ -129,6 +141,11 @@ namespace Propcalc {
 		virtual Ast::Type  type(void)  const { return Ast::Type::And;    }
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both;  }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Andish; }
+
+		virtual void fill_vars(std::unordered_set<const Variable*>& pile) const {
+			lhs->fill_vars(pile);
+			rhs->fill_vars(pile);
+		}
 
 		virtual std::string to_infix(void)   const;
 		virtual std::string to_prefix(void)  const;
@@ -146,6 +163,11 @@ namespace Propcalc {
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both; }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Orish; }
 
+		virtual void fill_vars(std::unordered_set<const Variable*>& pile) const {
+			lhs->fill_vars(pile);
+			rhs->fill_vars(pile);
+		}
+
 		virtual std::string to_infix(void)   const;
 		virtual std::string to_prefix(void)  const;
 		virtual std::string to_postfix(void) const;
@@ -161,6 +183,11 @@ namespace Propcalc {
 		virtual Ast::Type  type(void)  const { return Ast::Type::Impl;    }
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Right;  }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Implish; }
+
+		virtual void fill_vars(std::unordered_set<const Variable*>& pile) const {
+			lhs->fill_vars(pile);
+			rhs->fill_vars(pile);
+		}
 
 		virtual std::string to_infix(void)   const;
 		virtual std::string to_prefix(void)  const;
@@ -178,6 +205,11 @@ namespace Propcalc {
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both;  }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Eqvish; }
 
+		virtual void fill_vars(std::unordered_set<const Variable*>& pile) const {
+			lhs->fill_vars(pile);
+			rhs->fill_vars(pile);
+		}
+
 		virtual std::string to_infix(void)   const;
 		virtual std::string to_prefix(void)  const;
 		virtual std::string to_postfix(void) const;
@@ -193,6 +225,11 @@ namespace Propcalc {
 		virtual Ast::Type  type(void)  const { return Ast::Type::Xor;    }
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both;  }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Xorish; }
+
+		virtual void fill_vars(std::unordered_set<const Variable*>& pile) const {
+			lhs->fill_vars(pile);
+			rhs->fill_vars(pile);
+		}
 
 		virtual std::string to_infix(void)   const;
 		virtual std::string to_prefix(void)  const;

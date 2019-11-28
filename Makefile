@@ -4,7 +4,7 @@ CPPFLAGS += -I.
 CXXFLAGS += -std=c++14 -Wall -Werror -O0 -ggdb
 CFLAGS += -Wall -Werror -O0 -ggdb
 
-libpropcalc.so: variable.o ast.o formula.o
+libpropcalc.so: variable.o ast.o assignment.o formula.o
 #libpropcalc.so: propcalc.o
 	$(CXX) $(CXXFLAGS) -o $@ -shared $(LDFLAGS) $^
 

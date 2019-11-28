@@ -19,6 +19,7 @@
 #include <memory>
 #include <deque>
 #include <stack>
+#include <unordered_set>
 
 #include <propcalc/ast.hpp>
 #include <propcalc/formula.hpp>
@@ -279,16 +280,10 @@ Formula::Formula(shared_ptr<Ast> root, shared_ptr<Domain> domain) :
 	root(root)
 { }
 
-string Formula::to_infix(void) const {
-	return root->to_infix();
-}
-
-string Formula::to_prefix(void) const {
-	return root->to_prefix();
-}
-
-string Formula::to_postfix(void) const {
-	return root->to_postfix();
+std::vector<const Variable*> Formula::vars(void) const {
+	unordered_set<const Variable *> pile;
+	root->fill_vars(pile);
+	return domain->sort(pile);
 }
 
 Formula Formula::operator~(void) {

@@ -22,6 +22,7 @@
 
 #include <propcalc/ast.hpp>
 #include <propcalc/variable.hpp>
+#include <propcalc/assignment.hpp>
 #include <propcalc/formula.hpp>
 
 #endif /* PROPCALC_HPP */

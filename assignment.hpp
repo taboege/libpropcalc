@@ -1,0 +1,42 @@
+/*
+ * assignment.hpp - Assignment
+ *
+ * Copyright (C) 2019 Tobias Boege
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the Artistic License 2.0
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * Artistic License 2.0 for more details.
+ */
+
+#ifndef PROPCALC_ASSIGNMENT_HPP
+#define PROPCALC_ASSIGNMENT_HPP
+
+#include <set>
+#include <vector>
+#include <unordered_map>
+
+#include <propcalc/variable.hpp>
+
+namespace Propcalc {
+	class Assignment {
+		std::vector<const Variable *> order;
+		std::unordered_map<const Variable*, bool> assign;
+
+	public:
+		Assignment(std::vector<const Variable*> vars);
+
+		bool overflow;
+		std::set<const Variable*> set(void) const;
+
+		Assignment& operator++(void);
+		Assignment  operator++(int);
+		bool&       operator[](const Variable *v);
+		bool        operator[](const Variable *v) const;
+	};
+}
+
+#endif /* PROPCALC_ASSIGNMENT_HPP */

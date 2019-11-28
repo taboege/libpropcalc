@@ -29,9 +29,11 @@ namespace Propcalc {
 		Formula(std::string fm, std::shared_ptr<Domain> domain = DefaultDomain);
 		Formula(std::shared_ptr<Ast> root, std::shared_ptr<Domain> domain = DefaultDomain);
 
-		std::string to_infix(void)   const;
-		std::string to_prefix(void)  const;
-		std::string to_postfix(void) const;
+		std::vector<const Variable*> vars(void) const;
+
+		std::string to_infix(void)   const { return root->to_infix();   }
+		std::string to_prefix(void)  const { return root->to_prefix();  }
+		std::string to_postfix(void) const { return root->to_postfix(); }
 
 		Formula operator~(void);
 		Formula operator&(const Formula& rhs);

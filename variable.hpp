@@ -20,6 +20,7 @@
 #include <vector>
 #include <mutex>
 #include <map>
+#include <unordered_set>
 
 namespace Propcalc {
 	class Variable {
@@ -37,6 +38,10 @@ namespace Propcalc {
 		virtual const Variable* get(std::string name)   = 0;
 		virtual std::vector<const Variable*> list(void) = 0;
 
+		virtual std::vector<const Variable*> sort(
+			std::unordered_set<const Variable*>& pile
+		) = 0;
+
 		/*
 		 * TODO: Tseitin transform wants to introduce new temporary
 		 * variables. The domain itself has to support this,
@@ -51,12 +56,16 @@ namespace Propcalc {
 
 	class Cache : public Domain {
 	private:
-		std::mutex update;
+		std::mutex access;
 		std::map<std::string, std::unique_ptr<Variable>> cache;
 
 	public:
 		virtual const Variable* get(std::string name);
 		virtual std::vector<const Variable*> list(void);
+
+		virtual std::vector<const Variable*> sort(
+			std::unordered_set<const Variable*>& pile
+		);
 	};
 }
 

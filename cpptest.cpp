@@ -32,5 +32,14 @@ int main(int argc, char* argv[]) {
 	for (auto& v : Propcalc::DefaultDomain->list())
 		cout << v->to_string() << ": " << i++ << endl;
 
+	auto vars = fm.vars();
+	auto assign = Propcalc::Assignment(vars);
+	while (!assign.overflow) {
+		for (auto& v : vars)
+			cout << v->name << ": " << assign[v] << " ";
+		cout << endl;
+		++assign;
+	}
+
 	return 0;
 }
