@@ -40,26 +40,24 @@ enum optype {
 	                (internal use) */
 };
 
-struct op {
-	int prec;
-	unsigned int arity;
-	optype type;
+struct opdesc {
+	Ast::Prec prec;
+	size_t arity;
 };
 
-static const struct op OPS[] = {
+static const struct opdesc OPS[] = {
 	/* XXX: No associativity information because this parser has
 	 * very limited scope and everything can be supposed to be
 	 * right-associative. */
-	/* FIXME: Should use ast.hpp enum classes! */
-	[OP_CONST] = { .prec = 20, .arity = 0, .type = OP_CONST },
-	[OP_VAR]   = { .prec = 20, .arity = 0, .type = OP_VAR   },
-	[OP_NOT]   = { .prec = 14, .arity = 1, .type = OP_NOT   },
-	[OP_AND]   = { .prec = 12, .arity = 2, .type = OP_AND   },
-	[OP_OR]    = { .prec = 10, .arity = 2, .type = OP_OR    },
-	[OP_IMPL]  = { .prec =  8, .arity = 2, .type = OP_IMPL  },
-	[OP_EQV]   = { .prec =  6, .arity = 2, .type = OP_EQV   },
-	[OP_XOR]   = { .prec =  6, .arity = 2, .type = OP_XOR   },
-	[OP_OPAR]  = { .prec = -1, .arity = 0, .type = OP_OPAR  },
+	[OP_CONST] = { .prec = Ast::Prec::Symbolic, .arity = 0 },
+	[OP_VAR]   = { .prec = Ast::Prec::Symbolic, .arity = 0 },
+	[OP_NOT]   = { .prec = Ast::Prec::Notish,   .arity = 1 },
+	[OP_AND]   = { .prec = Ast::Prec::Andish,   .arity = 2 },
+	[OP_OR]    = { .prec = Ast::Prec::Orish,    .arity = 2 },
+	[OP_IMPL]  = { .prec = Ast::Prec::Implish,  .arity = 2 },
+	[OP_EQV]   = { .prec = Ast::Prec::Eqvish,   .arity = 2 },
+	[OP_XOR]   = { .prec = Ast::Prec::Xorish,   .arity = 2 },
+	[OP_OPAR]  = { .prec = Ast::Prec::Loose,    .arity = 0 },
 };
 
 enum toktype {
