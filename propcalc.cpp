@@ -15,7 +15,7 @@ unsigned int propcalc_version(void) {
 }
 
 #define REFORM(x)		static_cast<propform_t>(x)
-#define DEFORM(x)		static_cast<Propcalc::Formula *>(x)
+#define DEFORM(x)		static_cast<Propcalc::Formula*>(x)
 #define NEWREFORM(x)	REFORM(new Propcalc::Formula(x))
 
 propform_t propcalc_formula_new(const char *fm) {

@@ -90,9 +90,9 @@ namespace Propcalc {
 
 	class Ast::Var : public Ast {
 	public:
-		const Variable *var;
+		const Variable* var;
 
-		Var(const Variable *var) : var(var) { }
+		Var(const Variable* var) : var(var) { }
 
 		virtual Ast::Type  type(void)  const { return Ast::Type::Var;      }
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Non;     }

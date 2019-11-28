@@ -75,13 +75,13 @@ struct token {
 		unsigned int var;
 		optype op;
 		struct {
-			const char *s;
+			const char* s;
 			size_t len;
 		} sym;
 	};
 };
 
-static int next_token(const char *&s, token& tok) {
+static int next_token(const char*& s, token& tok) {
 	/* Skip whitespace */
 	while (isblank(*s))
 		s++;
@@ -198,7 +198,7 @@ static void reduce(optype op, deque<shared_ptr<Ast>>& astdq) {
 	}
 }
 
-shared_ptr<Ast> parse(const char *s, shared_ptr<Domain> domain) {
+shared_ptr<Ast> parse(const char* s, shared_ptr<Domain> domain) {
 	deque<shared_ptr<Ast>> astdq;
 	stack<optype> ops;
 
