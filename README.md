@@ -9,10 +9,10 @@ of in Perl.
 
 **v0.1:**
 - [X] Formula parsing and printing
-- [ ] Evaluation and truth tables
-- [ ] JIT compilation support
-- [ ] CNF conversion (truth table / rewriting / Tseytin)
+- [X] Evaluation and truth tables
+- [X] CNF conversion (truth table? / rewriting? / Tseitin?)
 - [ ] DIMACS import/export
+- [ ] JIT compilation support
 - [ ] Documentation and tests
 
 **v0.2:**
