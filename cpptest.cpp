@@ -37,7 +37,11 @@ int main(int argc, char* argv[]) {
 	while (!assign.overflow) {
 		for (auto& v : vars)
 			cout << v->name << ": " << assign[v] << " ";
-		cout << endl;
+		cout << "(short: ";
+		for (size_t i = 1; i <= assign.vars().size(); ++i) {
+			cout << assign[i];
+		}
+		cout << ")" << endl;
 		++assign;
 	}
 

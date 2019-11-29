@@ -63,4 +63,12 @@ bool Assignment::operator[](const Variable *v) const {
 	return assign.at(v);
 }
 
+bool& Assignment::operator[](size_t nr) {
+	return assign.at(order[nr - 1]);
+}
+
+bool Assignment::operator[](size_t nr) const {
+	return assign.at(order[nr - 1]);
+}
+
 }

@@ -32,10 +32,14 @@ namespace Propcalc {
 		bool overflow;
 		std::set<const Variable*> set(void) const;
 
+		std::vector<const Variable *>& vars(void) { return order; }
+
 		Assignment& operator++(void);
 		Assignment  operator++(int);
 		bool&       operator[](const Variable *v);
 		bool        operator[](const Variable *v) const;
+		bool&       operator[](size_t nr);
+		bool        operator[](size_t nr) const;
 	};
 }
 
