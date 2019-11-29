@@ -20,6 +20,7 @@
 #include <vector>
 
 #include <propcalc/variable.hpp>
+#include <propcalc/assignment.hpp>
 
 namespace Propcalc {
 
@@ -59,6 +60,7 @@ namespace Propcalc {
 		virtual Ast::Prec  prec(void)  const = 0;
 
 		virtual void fill_vars(std::unordered_set<const Variable*>& pile) const = 0;
+		virtual bool eval(const Assignment& assign) const = 0;
 
 		virtual std::string to_infix(void)   const = 0;
 		virtual std::string to_prefix(void)  const = 0;
@@ -85,6 +87,7 @@ namespace Propcalc {
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Symbolic; }
 
 		virtual void fill_vars(std::unordered_set<const Variable*>& pile) const { }
+		virtual bool eval(const Assignment& assign) const { return value; }
 
 		virtual std::string to_string(void)  const { return value ? "\\T" : "\\F"; }
 		virtual std::string to_infix(void)   const { return this->to_string(); }
@@ -106,6 +109,8 @@ namespace Propcalc {
 			pile.insert(var);
 		}
 
+		virtual bool eval(const Assignment& assign) const { return assign[var]; }
+
 		virtual std::string to_string(void)  const { return var->to_string(); }
 		virtual std::string to_infix(void)   const { return var->to_string(); }
 		virtual std::string to_prefix(void)  const { return var->to_string(); }
@@ -125,6 +130,8 @@ namespace Propcalc {
 		virtual void fill_vars(std::unordered_set<const Variable*>& pile) const {
 			rhs->fill_vars(pile);
 		}
+
+		virtual bool eval(const Assignment& assign) const { return ! rhs->eval(assign); }
 
 		virtual std::string to_infix(void)   const;
 		virtual std::string to_prefix(void)  const;
@@ -147,6 +154,8 @@ namespace Propcalc {
 			rhs->fill_vars(pile);
 		}
 
+		virtual bool eval(const Assignment& assign) const { return lhs->eval(assign) && rhs->eval(assign); }
+
 		virtual std::string to_infix(void)   const;
 		virtual std::string to_prefix(void)  const;
 		virtual std::string to_postfix(void) const;
@@ -167,6 +176,8 @@ namespace Propcalc {
 			lhs->fill_vars(pile);
 			rhs->fill_vars(pile);
 		}
+
+		virtual bool eval(const Assignment& assign) const { return lhs->eval(assign) || rhs->eval(assign); }
 
 		virtual std::string to_infix(void)   const;
 		virtual std::string to_prefix(void)  const;
@@ -189,6 +200,8 @@ namespace Propcalc {
 			rhs->fill_vars(pile);
 		}
 
+		virtual bool eval(const Assignment& assign) const { return !lhs->eval(assign) || rhs->eval(assign); }
+
 		virtual std::string to_infix(void)   const;
 		virtual std::string to_prefix(void)  const;
 		virtual std::string to_postfix(void) const;
@@ -210,6 +223,8 @@ namespace Propcalc {
 			rhs->fill_vars(pile);
 		}
 
+		virtual bool eval(const Assignment& assign) const { return lhs->eval(assign) == rhs->eval(assign); }
+
 		virtual std::string to_infix(void)   const;
 		virtual std::string to_prefix(void)  const;
 		virtual std::string to_postfix(void) const;
@@ -230,6 +245,8 @@ namespace Propcalc {
 			lhs->fill_vars(pile);
 			rhs->fill_vars(pile);
 		}
+
+		virtual bool eval(const Assignment& assign) const { return lhs->eval(assign) != rhs->eval(assign); }
 
 		virtual std::string to_infix(void)   const;
 		virtual std::string to_prefix(void)  const;

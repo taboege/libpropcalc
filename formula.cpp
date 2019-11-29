@@ -275,15 +275,14 @@ Formula::Formula(string fm, shared_ptr<Domain> domain) :
 	root(parse(fm.c_str(), domain))
 { }
 
-Formula::Formula(shared_ptr<Ast> root, shared_ptr<Domain> domain) :
-	domain(domain),
-	root(root)
-{ }
-
-std::vector<const Variable*> Formula::vars(void) const {
+vector<const Variable*> Formula::vars(void) const {
 	unordered_set<const Variable *> pile;
 	root->fill_vars(pile);
 	return domain->sort(pile);
+}
+
+Truthtable Formula::truthtable(void) const {
+	return Truthtable(*this);
 }
 
 Formula Formula::operator~(void) {
