@@ -285,6 +285,10 @@ Truthtable Formula::truthtable(void) const {
 	return Truthtable(*this);
 }
 
+Clauses Formula::clauses(void) const {
+	return Clauses(*this);
+}
+
 Formula Formula::operator~(void) {
 	return Formula(make_shared<Ast::Not>(root), domain);
 }
@@ -317,6 +321,45 @@ Formula Formula::operator^(const Formula& rhs) {
 	if (domain.get() != rhs.domain.get())
 		throw "domains must be equal";
 	return Formula(make_shared<Ast::Xor>(root, rhs.root), domain);
+}
+
+Clauses::Clauses(const Formula& fm) :
+	fm(fm)
+{
+	/* Skip all And nodes at the root, recursively. These just tell us to
+	 * concatenate the clauses of the maximal subtrees without and And at
+	 * the root. This way, the truth tables of subtrees are smaller. */
+	queue.push(fm.root);
+	while (queue.front()->type() == Ast::Type::And) {
+		Ast::And* v = static_cast<Ast::And*>(queue.front().get());
+		queue.pop();
+		queue.push(v->lhs);
+		queue.push(v->rhs);
+	}
+	++*this; /* forward to the first clause */
+}
+
+Clauses& Clauses::operator++(void) {
+	while (true) {
+		if (!current) {
+			if (queue.size() == 0)
+				break; /* no more clauses */
+			current = queue.front();
+			queue.pop();
+			last = Assignment(Formula(current, fm.domain).vars());
+		}
+		else {
+			++last;
+			if (last.overflow) {
+				current = nullptr;
+				continue;
+			}
+		}
+
+		if (!fm.eval(last))
+			break; /* found the next clause */
+	}
+	return *this;
 }
 
 } /* namespace Propcalc */

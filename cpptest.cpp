@@ -71,5 +71,20 @@ int main(int argc, char* argv[]) {
 	}
 	cout << endl;
 
+	cout << "CNF clauses of " << fm.to_infix() << ":" << endl;
+	auto cc = fm.clauses();
+	while (!cc.end()) {
+		cout << "{ ";
+		int i = 0;
+		for (auto& v : cc.assigned().set()) {
+			if (i++)
+				cout << "& ";
+			cout << "~" << v->name << " ";
+		}
+		cout << "}" << endl;
+		++cc;
+	}
+	cout << endl;
+
 	return 0;
 }

@@ -27,6 +27,7 @@ namespace Propcalc {
 		std::unordered_map<const Variable*, bool> assign;
 
 	public:
+		Assignment() : overflow(true) { }
 		Assignment(std::vector<const Variable*> vars);
 
 		bool overflow;

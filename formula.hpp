@@ -27,12 +27,14 @@ namespace Propcalc {
 	extern std::shared_ptr<Cache> DefaultDomain;
 
 	class Truthtable;
+	class Clauses;
 
 	class Formula {
 		std::shared_ptr<Domain> domain;
 		std::shared_ptr<Ast>    root;
 
 		friend class Truthtable;
+		friend class Clauses;
 
 	public:
 		Formula(std::string fm, std::shared_ptr<Domain> domain = DefaultDomain);
@@ -45,6 +47,7 @@ namespace Propcalc {
 		bool eval(const Assignment& assign) const { return root->eval(assign); }
 
 		Truthtable truthtable(void) const;
+		Clauses    clauses(void)    const;
 
 		std::string to_infix(void)   const { return root->to_infix();   }
 		std::string to_prefix(void)  const { return root->to_prefix();  }
@@ -83,6 +86,28 @@ namespace Propcalc {
 		}
 
 		bool operator*(void) const { return this->value(); }
+	};
+
+	class Clauses {
+		Formula fm;
+		std::queue<std::shared_ptr<Ast>> queue;
+		std::shared_ptr<Ast> current = nullptr;
+		Assignment last;
+
+	public:
+		Clauses(const Formula& fm);
+
+		bool end(void) const       { return queue.size() == 0 && current == nullptr; }
+		Assignment& assigned(void) { return last; }
+
+		Clauses& operator++(void);
+		Clauses  operator++(int) {
+			Clauses tmp(*this);
+			operator++();
+			return tmp;
+		}
+
+		Assignment& operator*(void) { return this->assigned(); }
 	};
 }
 
