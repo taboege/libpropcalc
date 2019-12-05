@@ -10,18 +10,16 @@ of in Perl.
 **v0.1:**
 - [X] Formula parsing and printing
 - [X] Evaluation and truth tables
-- [X] CNF conversion (truth table? / rewriting? / Tseitin?)
+- [X] CNF conversion
 - [ ] DIMACS import/export
-- [ ] JIT compilation support
 - [ ] Documentation and tests
 
 **v0.2:**
-- [ ] SAT, #SAT and AllSAT solver
-- [ ] BDD and ZDD support
+- [ ] SAT, #SAT and AllSAT solvers
 - [ ] Documentation and tests
 
 **v0.3:**
-- [ ] Parallel SAT solvers
+- [ ] Knowledge compilers: BDD, ZDD, d-DNNF
 - [ ] Documentation and tests
 
 ## Description
@@ -41,5 +39,5 @@ following reasons:
 The problem is I have programmed in C, but never in C++ before, and I recognize
 it's a complex language that wants to be well understood, and where best
 practices change over time. Since I'm under time constraints, this library
-is basically written in C + exceptions + minimal use of the STL. Patches that
-make it into real C++ **very** welcome!
+is basically written in C + exceptions + containers + RAII, as far as my
+skills go. Patches that make it into real C++(11) **very** welcome!

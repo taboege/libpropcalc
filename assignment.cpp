@@ -26,6 +26,10 @@ Assignment::Assignment(vector<const Variable*> vars) :
 	overflow = vars.size() == 0;
 }
 
+bool Assignment::exists(const Variable* var) const {
+	return assign.count(var) > 0;
+}
+
 set<const Variable*> Assignment::set(void) const {
 	auto set = std::set<const Variable*>();
 	for (auto& p : assign) {
