@@ -71,9 +71,9 @@ namespace Propcalc {
 			last(Assignment(fm.vars()))
 		{ }
 
-		bool end(void) const       { return last.overflow; }
-		bool value(void) const     { return fm.eval(last); }
-		Assignment& assigned(void) { return last;          }
+		bool end(void) const       { return last.overflown(); }
+		bool value(void) const     { return fm.eval(last);    }
+		Assignment& assigned(void) { return last;             }
 
 		Truthtable& operator++(void) {
 			++last;

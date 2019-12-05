@@ -25,12 +25,13 @@ namespace Propcalc {
 	class Assignment {
 		std::vector<const Variable *> order;
 		std::unordered_map<const Variable*, bool> assign;
+		bool overflow;
 
 	public:
 		Assignment() : overflow(true) { }
 		Assignment(std::vector<const Variable*> vars);
 
-		bool overflow;
+		bool overflown(void) const { return overflow; }
 		std::set<const Variable*> set(void) const;
 
 		std::vector<const Variable *>& vars(void) { return order; }

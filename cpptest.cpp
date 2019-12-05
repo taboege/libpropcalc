@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
 
 	auto vars = fm.vars();
 	auto assign = Propcalc::Assignment(vars);
-	while (!assign.overflow) {
+	while (!assign.overflown()) {
 		for (auto& v : vars)
 			cout << v->name << ": " << assign[v] << " ";
 		cout << "(short: ";
