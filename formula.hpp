@@ -22,19 +22,20 @@
 #include <propcalc/ast.hpp>
 #include <propcalc/variable.hpp>
 #include <propcalc/assignment.hpp>
+#include <propcalc/clause.hpp>
 
 namespace Propcalc {
 	extern std::shared_ptr<Cache> DefaultDomain;
 
 	class Truthtable;
-	class Clauses;
+	class CNF;
 
 	class Formula {
 		std::shared_ptr<Domain> domain;
 		std::shared_ptr<Ast>    root;
 
 		friend class Truthtable;
-		friend class Clauses;
+		friend class CNF;
 
 	public:
 		Formula(std::string fm, std::shared_ptr<Domain> domain = DefaultDomain);
@@ -47,7 +48,7 @@ namespace Propcalc {
 		bool eval(const Assignment& assign) const { return root->eval(assign); }
 
 		Truthtable truthtable(void) const;
-		Clauses    clauses(void)    const;
+		CNF cnf(void) const;
 
 		std::string to_infix(void)   const { return root->to_infix();   }
 		std::string to_prefix(void)  const { return root->to_prefix();  }
@@ -61,7 +62,7 @@ namespace Propcalc {
 		Formula operator^(const Formula& rhs);
 	};
 
-	class Truthtable {
+	class Truthtable : public Stream<bool> {
 		Formula fm;
 		Assignment last;
 
@@ -71,43 +72,30 @@ namespace Propcalc {
 			last(Assignment(fm.vars()))
 		{ }
 
-		bool end(void) const       { return last.overflown(); }
-		bool value(void) const     { return fm.eval(last);    }
-		Assignment& assigned(void) { return last;             }
+		bool exhausted(void) const { return last.overflown(); }
+		bool value(void)           { return fm.eval(last); }
+		Assignment& assigned(void) { return last; }
 
 		Truthtable& operator++(void) {
 			++last;
 			return *this;
 		}
-		Truthtable operator++(int) {
-			Truthtable tmp(*this);
-			operator++();
-			return tmp;
-		}
-
-		bool operator*(void) const { return this->value(); }
 	};
 
-	class Clauses {
+	class CNF : public Stream<Clause> {
 		Formula fm;
 		std::queue<std::shared_ptr<Ast>> queue;
 		std::shared_ptr<Ast> current = nullptr;
 		Assignment last;
 
 	public:
-		Clauses(const Formula& fm);
+		CNF(const Formula& fm);
 
-		bool end(void) const       { return queue.size() == 0 && current == nullptr; }
+		bool exhausted(void) const { return queue.size() == 0 && current == nullptr; }
+		Clause value(void)         { return last; }
 		Assignment& assigned(void) { return last; }
 
-		Clauses& operator++(void);
-		Clauses  operator++(int) {
-			Clauses tmp(*this);
-			operator++();
-			return tmp;
-		}
-
-		Assignment& operator*(void) { return this->assigned(); }
+		CNF& operator++(void);
 	};
 }
 

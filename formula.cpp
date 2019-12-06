@@ -285,8 +285,8 @@ Truthtable Formula::truthtable(void) const {
 	return Truthtable(*this);
 }
 
-Clauses Formula::clauses(void) const {
-	return Clauses(*this);
+CNF Formula::cnf(void) const {
+	return CNF(*this);
 }
 
 Formula Formula::operator~(void) {
@@ -323,7 +323,7 @@ Formula Formula::operator^(const Formula& rhs) {
 	return Formula(make_shared<Ast::Xor>(root, rhs.root), domain);
 }
 
-Clauses::Clauses(const Formula& fm) :
+CNF::CNF(const Formula& fm) :
 	fm(fm)
 {
 	/* Skip all And nodes at the root, recursively. These just tell us to
@@ -339,7 +339,7 @@ Clauses::Clauses(const Formula& fm) :
 	++*this; /* forward to the first clause */
 }
 
-Clauses& Clauses::operator++(void) {
+CNF& CNF::operator++(void) {
 	while (true) {
 		if (!current) {
 			if (queue.size() == 0)
@@ -350,7 +350,7 @@ Clauses& Clauses::operator++(void) {
 		}
 		else {
 			++last;
-			if (last.overflow) {
+			if (last.overflown()) {
 				current = nullptr;
 				continue;
 			}

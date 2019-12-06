@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
 
 	cout << "truth table of " << fm.to_infix() << ":" << endl;
 	auto tt = fm.truthtable();
-	while (!tt.end()) {
+	while (!tt.exhausted()) {
 		for (size_t i = 1; i <= tt.assigned().vars().size(); ++i)
 			cout << tt.assigned()[i];
 		cout << ": " << tt.value() << endl;
@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
 
 	cout << "satisfying assignments of " << fm.to_infix() << ":" << endl;
 	tt = fm.truthtable();
-	while (!tt.end()) {
+	while (!tt.exhausted()) {
 		if (tt.value()) {
 			cout << "{ ";
 			for (auto& v : tt.assigned().set())
@@ -72,17 +72,17 @@ int main(int argc, char* argv[]) {
 	cout << endl;
 
 	cout << "CNF clauses of " << fm.to_infix() << ":" << endl;
-	auto cc = fm.clauses();
-	while (!cc.end()) {
+	auto cnf = fm.cnf();
+	while (!cnf.exhausted()) {
 		cout << "{ ";
 		int i = 0;
-		for (auto& v : cc.assigned().set()) {
+		for (auto& v : cnf.assigned().set()) {
 			if (i++)
 				cout << "& ";
 			cout << "~" << v->name << " ";
 		}
 		cout << "}" << endl;
-		++cc;
+		++cnf;
 	}
 	cout << endl;
 

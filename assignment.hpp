@@ -31,7 +31,8 @@ namespace Propcalc {
 		Assignment() : overflow(true) { }
 		Assignment(std::vector<const Variable*> vars);
 
-		bool overflown(void) const { return overflow; }
+		bool  overflown(void) const { return overflow; }
+		bool& overflown(void)       { return overflow; }
 
 		bool exists(const Variable* var) const;
 		std::set<const Variable*> set(void) const;
