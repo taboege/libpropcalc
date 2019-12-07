@@ -48,8 +48,8 @@ namespace Propcalc {
 		}
 
 		bool exhausted(void) const { return queue.size() == 0 && current == nullptr; }
-		Clause value(void)         { return last; }
-		Assignment& assigned(void) { return last; }
+		Clause  value(void)  { return last; }
+		Clause& clause(void) { return last; }
 
 		CNF& operator++(void) {
 			while (true) {

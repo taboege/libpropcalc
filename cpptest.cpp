@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
 	while (!cnf.exhausted()) {
 		cout << "{ ";
 		int i = 0;
-		for (auto& v : cnf.assigned().set()) {
+		for (auto& v : cnf.clause().set()) {
 			if (i++)
 				cout << "& ";
 			cout << "~" << v->name << " ";
