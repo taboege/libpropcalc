@@ -28,7 +28,7 @@ namespace Propcalc {
 		std::string name;
 
 		Variable(std::string name) : name(name) { }
-		Variable(const char* s, size_t len) : name(std::string(s, len)) { }
+		Variable(const char* s, size_t len) : name(s, len) { }
 
 		virtual std::string to_string(void) const { return "[" + name + "]"; }
 	};

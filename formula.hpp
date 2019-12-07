@@ -48,6 +48,11 @@ namespace Propcalc {
 		std::vector<const Variable*> vars(void) const;
 		bool eval(const Assignment& assign) const { return root->eval(assign); }
 
+		Formula simplify(void) const { return this->simplify(Assignment()); }
+		Formula simplify(const Assignment& assign) const {
+			return Formula(root->simplify(assign), domain);
+		}
+
 		Truthtable truthtable(void) const;
 		Tseitin    tseitin(void)    const;
 		CNF        cnf(void)        const;

@@ -61,6 +61,7 @@ namespace Propcalc {
 
 		virtual void fill_vars(std::unordered_set<const Variable*>& pile) const = 0;
 		virtual bool eval(const Assignment& assign) const = 0;
+		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const = 0;
 
 		virtual std::string to_infix(void)   const = 0;
 		virtual std::string to_prefix(void)  const = 0;
@@ -88,6 +89,9 @@ namespace Propcalc {
 
 		virtual void fill_vars(std::unordered_set<const Variable*>& pile) const { }
 		virtual bool eval(const Assignment& assign) const { return value; }
+		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const {
+			return std::make_shared<Ast::Const>(value);
+		}
 
 		virtual std::string to_string(void)  const { return value ? "\\T" : "\\F"; }
 		virtual std::string to_infix(void)   const { return this->to_string(); }
@@ -111,6 +115,14 @@ namespace Propcalc {
 
 		virtual bool eval(const Assignment& assign) const { return assign[var]; }
 
+		/* TODO: the way this is designed makes sharing nodes hard.
+		 * We don't do this at the moment and always allocate. */
+		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const {
+			if (assign.exists(var))
+				return std::make_shared<Ast::Const>(assign[var]);
+			return std::make_shared<Ast::Var>(var);
+		}
+
 		virtual std::string to_string(void)  const { return var->to_string(); }
 		virtual std::string to_infix(void)   const { return var->to_string(); }
 		virtual std::string to_prefix(void)  const { return var->to_string(); }
@@ -132,6 +144,8 @@ namespace Propcalc {
 		}
 
 		virtual bool eval(const Assignment& assign) const { return ! rhs->eval(assign); }
+
+		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const;
 
 		virtual std::string to_infix(void)   const;
 		virtual std::string to_prefix(void)  const;
@@ -156,6 +170,8 @@ namespace Propcalc {
 
 		virtual bool eval(const Assignment& assign) const { return lhs->eval(assign) && rhs->eval(assign); }
 
+		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const;
+
 		virtual std::string to_infix(void)   const;
 		virtual std::string to_prefix(void)  const;
 		virtual std::string to_postfix(void) const;
@@ -178,6 +194,8 @@ namespace Propcalc {
 		}
 
 		virtual bool eval(const Assignment& assign) const { return lhs->eval(assign) || rhs->eval(assign); }
+
+		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const;
 
 		virtual std::string to_infix(void)   const;
 		virtual std::string to_prefix(void)  const;
@@ -202,6 +220,8 @@ namespace Propcalc {
 
 		virtual bool eval(const Assignment& assign) const { return !lhs->eval(assign) || rhs->eval(assign); }
 
+		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const;
+
 		virtual std::string to_infix(void)   const;
 		virtual std::string to_prefix(void)  const;
 		virtual std::string to_postfix(void) const;
@@ -225,6 +245,8 @@ namespace Propcalc {
 
 		virtual bool eval(const Assignment& assign) const { return lhs->eval(assign) == rhs->eval(assign); }
 
+		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const;
+
 		virtual std::string to_infix(void)   const;
 		virtual std::string to_prefix(void)  const;
 		virtual std::string to_postfix(void) const;
@@ -247,6 +269,8 @@ namespace Propcalc {
 		}
 
 		virtual bool eval(const Assignment& assign) const { return lhs->eval(assign) != rhs->eval(assign); }
+
+		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const;
 
 		virtual std::string to_infix(void)   const;
 		virtual std::string to_prefix(void)  const;

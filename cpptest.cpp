@@ -101,5 +101,8 @@ int main(int argc, char* argv[]) {
 	}
 	cout << endl;
 
+	cout << "Original   formula: " << fm.to_infix() << endl;
+	cout << "Simplified formula: " << fm.simplify().to_infix() << endl;
+
 	return 0;
 }
