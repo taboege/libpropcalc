@@ -286,6 +286,10 @@ Truthtable Formula::truthtable(void) const {
 	return Truthtable(*this);
 }
 
+Tseitin Formula::tseitin(void) const {
+	return Tseitin(*this);
+}
+
 CNF Formula::cnf(void) const {
 	return CNF(*this);
 }

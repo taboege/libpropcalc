@@ -76,13 +76,28 @@ int main(int argc, char* argv[]) {
 	while (!cnf.exhausted()) {
 		cout << "{ ";
 		int i = 0;
-		for (auto& v : cnf.clause().set()) {
+		for (auto& v : cnf.clause().vars()) {
 			if (i++)
 				cout << "& ";
-			cout << "~" << v->name << " ";
+			cout << (cnf.clause()[v] ? "~" : "") << v->name << " ";
 		}
 		cout << "}" << endl;
 		++cnf;
+	}
+	cout << endl;
+
+	cout << "Tseitin transform of " << fm.to_infix() << ":" << endl;
+	auto tsei = fm.tseitin();
+	while (!tsei.exhausted()) {
+		cout << "{ ";
+		int i = 0;
+		for (auto& v : tsei.clause().vars()) {
+			if (i++)
+				cout << "& ";
+			cout << (tsei.clause()[v] ? "" : "~") << v->name << " ";
+		}
+		cout << "}" << endl;
+		++tsei;
 	}
 	cout << endl;
 

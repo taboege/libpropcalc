@@ -41,17 +41,6 @@ namespace Propcalc {
 		virtual std::vector<const Variable*> sort(
 			std::unordered_set<const Variable*>& pile
 		) = 0;
-
-		/*
-		 * TODO: Tseitin transform wants to introduce new temporary
-		 * variables. The domain itself has to support this,
-		 * i.e. we don't want to wrap the domain into a "Tseitin
-		 * domain wrapper" just to get access to temporary vars,
-		 * because then we couldn't compose formulas anymore,
-		 * because that needs identical domains. The outside should
-		 * dictate what class the temporaries have...
-		 */
-		//virtual ??? temp(???) = 0;
 	};
 
 	class Cache : public Domain {

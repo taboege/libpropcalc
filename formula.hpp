@@ -27,6 +27,7 @@ namespace Propcalc {
 	extern std::shared_ptr<Cache> DefaultDomain;
 
 	class Truthtable;
+	class Tseitin;
 	class CNF;
 
 	class Formula {
@@ -34,6 +35,7 @@ namespace Propcalc {
 		std::shared_ptr<Ast>    root;
 
 		friend class Truthtable;
+		friend class Tseitin;
 		friend class CNF;
 
 	public:
@@ -47,7 +49,8 @@ namespace Propcalc {
 		bool eval(const Assignment& assign) const { return root->eval(assign); }
 
 		Truthtable truthtable(void) const;
-		CNF cnf(void) const;
+		Tseitin    tseitin(void)    const;
+		CNF        cnf(void)        const;
 
 		std::string to_infix(void)   const { return root->to_infix();   }
 		std::string to_prefix(void)  const { return root->to_prefix();  }
@@ -64,6 +67,7 @@ namespace Propcalc {
 
 /* Complete the interface of Formula. */
 #include <propcalc/truthtable.hpp>
+#include <propcalc/tseitin.hpp>
 #include <propcalc/cnf.hpp>
 
 #endif /* PROPCALC_FORMULA_HPP */

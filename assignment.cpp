@@ -18,12 +18,21 @@ using namespace std;
 
 namespace Propcalc {
 
-Assignment::Assignment(vector<const Variable*> vars) :
-	order(vars)
-{
-	for (auto& v : vars)
+Assignment::Assignment(vector<const Variable*> vars) {
+	for (auto& v : vars) {
+		order.push_back(v);
 		assign.insert({ v, false });
-	overflow = vars.size() == 0;
+	}
+	overflow = order.size() == 0;
+}
+
+Assignment::Assignment(initializer_list<pair<const Variable*, bool>> il) {
+	/* Order specified by the list */
+	for (auto& p : il) {
+		order.push_back(p.first);
+		assign.insert(p);
+	}
+	overflow = order.size() == 0;
 }
 
 bool Assignment::exists(const Variable* var) const {

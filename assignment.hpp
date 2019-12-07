@@ -30,6 +30,7 @@ namespace Propcalc {
 	public:
 		Assignment() : overflow(true) { }
 		Assignment(std::vector<const Variable*> vars);
+		Assignment(std::initializer_list<std::pair<const Variable*, bool>> il);
 
 		bool  overflown(void) const { return overflow; }
 		bool& overflown(void)       { return overflow; }
