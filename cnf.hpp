@@ -30,6 +30,7 @@ namespace Propcalc {
 		std::queue<std::shared_ptr<Ast>> queue;
 		std::shared_ptr<Ast> current = nullptr;
 		Assignment last;
+		Clause cl;
 
 	public:
 		CNF(const Formula& fm) : fm(fm) {
@@ -48,8 +49,8 @@ namespace Propcalc {
 		}
 
 		bool exhausted(void) const { return queue.size() == 0 && current == nullptr; }
-		Clause  value(void)  { return last; }
-		Clause& clause(void) { return last; }
+		Clause  value(void)  { return cl; }
+		Clause& clause(void) { return cl; }
 
 		CNF& operator++(void) {
 			while (true) {
@@ -68,8 +69,10 @@ namespace Propcalc {
 					}
 				}
 
-				if (!fm.eval(last))
+				if (!fm.eval(last)) {
+					cl = ~last;
 					break; /* found the next clause */
+				}
 			}
 			return *this;
 		}

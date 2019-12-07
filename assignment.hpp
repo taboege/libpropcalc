@@ -40,6 +40,7 @@ namespace Propcalc {
 
 		std::vector<const Variable *>& vars(void) { return order; }
 
+		Assignment  operator~(void) const;
 		Assignment& operator++(void);
 		Assignment  operator++(int);
 		bool&       operator[](const Variable *v);

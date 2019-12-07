@@ -48,6 +48,13 @@ set<const Variable*> Assignment::set(void) const {
 	return set;
 }
 
+Assignment Assignment::operator~(void) const {
+	Assignment neg(order);
+	for (auto& v : order)
+		neg[v] = !assign.at(v);
+	return neg;
+}
+
 Assignment& Assignment::operator++(void) {
 	/* Use the given order to implement a (consistent) binary incrementer
 	 * which adheres to the variable order given at construction. */

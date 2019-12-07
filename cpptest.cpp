@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
 		for (auto& v : cnf.clause().vars()) {
 			if (i++)
 				cout << "& ";
-			cout << (cnf.clause()[v] ? "~" : "") << v->name << " ";
+			cout << (cnf.clause()[v] ? "" : "~") << v->name << " ";
 		}
 		cout << "}" << endl;
 		++cnf;
