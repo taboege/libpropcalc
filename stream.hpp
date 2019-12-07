@@ -1,5 +1,5 @@
 /*
- * clause.hpp - Clause
+ * stream.hpp - Stream
  *
  * Copyright (C) 2019 Tobias Boege
  *
@@ -12,13 +12,24 @@
  * Artistic License 2.0 for more details.
  */
 
-#ifndef PROPCALC_CLAUSE_HPP
-#define PROPCALC_CLAUSE_HPP
+#ifndef PROPCALC_STREAM_HPP
+#define PROPCALC_STREAM_HPP
 
 #include <propcalc/assignment.hpp>
 
 namespace Propcalc {
-	using Clause = Assignment;
+	template<typename T>
+	class Stream {
+		virtual bool exhausted(void) const = 0;
+
+		virtual Stream<T>& operator++(void) = 0;
+
+		virtual T value(void) = 0;
+		T operator*(void) {
+			return this->value();
+		}
+	};
 }
 
-#endif /* PROPCALC_CLAUSE_HPP */
+
+#endif /* PROPCALC_STREAM_HPP */

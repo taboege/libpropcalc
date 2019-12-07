@@ -22,7 +22,6 @@
 #include <propcalc/ast.hpp>
 #include <propcalc/variable.hpp>
 #include <propcalc/assignment.hpp>
-#include <propcalc/clause.hpp>
 
 namespace Propcalc {
 	extern std::shared_ptr<Cache> DefaultDomain;
@@ -61,42 +60,10 @@ namespace Propcalc {
 		Formula operator==(const Formula& rhs);
 		Formula operator^(const Formula& rhs);
 	};
-
-	class Truthtable : public Stream<bool> {
-		Formula fm;
-		Assignment last;
-
-	public:
-		Truthtable(const Formula& fm) :
-			fm(fm),
-			last(Assignment(fm.vars()))
-		{ }
-
-		bool exhausted(void) const { return last.overflown(); }
-		bool value(void)           { return fm.eval(last); }
-		Assignment& assigned(void) { return last; }
-
-		Truthtable& operator++(void) {
-			++last;
-			return *this;
-		}
-	};
-
-	class CNF : public Stream<Clause> {
-		Formula fm;
-		std::queue<std::shared_ptr<Ast>> queue;
-		std::shared_ptr<Ast> current = nullptr;
-		Assignment last;
-
-	public:
-		CNF(const Formula& fm);
-
-		bool exhausted(void) const { return queue.size() == 0 && current == nullptr; }
-		Clause value(void)         { return last; }
-		Assignment& assigned(void) { return last; }
-
-		CNF& operator++(void);
-	};
 }
+
+/* Complete the interface of Formula. */
+#include <propcalc/truthtable.hpp>
+#include <propcalc/cnf.hpp>
 
 #endif /* PROPCALC_FORMULA_HPP */

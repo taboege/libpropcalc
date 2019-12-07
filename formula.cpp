@@ -21,8 +21,9 @@
 #include <stack>
 #include <unordered_set>
 
-#include <propcalc/ast.hpp>
 #include <propcalc/formula.hpp>
+#include <propcalc/truthtable.hpp>
+#include <propcalc/cnf.hpp>
 
 using namespace std;
 
@@ -321,45 +322,6 @@ Formula Formula::operator^(const Formula& rhs) {
 	if (domain.get() != rhs.domain.get())
 		throw "domains must be equal";
 	return Formula(make_shared<Ast::Xor>(root, rhs.root), domain);
-}
-
-CNF::CNF(const Formula& fm) :
-	fm(fm)
-{
-	/* Skip all And nodes at the root, recursively. These just tell us to
-	 * concatenate the clauses of the maximal subtrees without and And at
-	 * the root. This way, the truth tables of subtrees are smaller. */
-	queue.push(fm.root);
-	while (queue.front()->type() == Ast::Type::And) {
-		Ast::And* v = static_cast<Ast::And*>(queue.front().get());
-		queue.pop();
-		queue.push(v->lhs);
-		queue.push(v->rhs);
-	}
-	++*this; /* forward to the first clause */
-}
-
-CNF& CNF::operator++(void) {
-	while (true) {
-		if (!current) {
-			if (queue.size() == 0)
-				break; /* no more clauses */
-			current = queue.front();
-			queue.pop();
-			last = Assignment(Formula(current, fm.domain).vars());
-		}
-		else {
-			++last;
-			if (last.overflown()) {
-				current = nullptr;
-				continue;
-			}
-		}
-
-		if (!fm.eval(last))
-			break; /* found the next clause */
-	}
-	return *this;
 }
 
 } /* namespace Propcalc */
