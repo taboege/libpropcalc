@@ -51,9 +51,9 @@ namespace Propcalc {
 			> cache;
 
 		public:
-			const Variable* get(std::shared_ptr<Ast> ast) {
+			VarRef get(std::shared_ptr<Ast> ast) {
 				const std::lock_guard<std::mutex> lock(access);
-				const Variable* var;
+				VarRef var;
 
 				auto it = cache.find(ast);
 				if (it == cache.end()) {

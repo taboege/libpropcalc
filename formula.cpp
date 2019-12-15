@@ -276,7 +276,7 @@ Formula::Formula(string fm, shared_ptr<Domain> domain) :
 	root(parse(fm.c_str(), domain))
 { }
 
-vector<const Variable*> Formula::vars(void) const {
+vector<VarRef> Formula::vars(void) const {
 	unordered_set<const Variable *> pile;
 	root->fill_vars(pile);
 	return domain->sort(pile);

@@ -33,13 +33,15 @@ namespace Propcalc {
 		virtual std::string to_string(void) const { return "[" + name + "]"; }
 	};
 
+	using VarRef = const Variable*;
+
 	class Domain {
 	public:
-		virtual const Variable* get(std::string name)   = 0;
-		virtual std::vector<const Variable*> list(void) = 0;
+		virtual VarRef get(std::string name)   = 0;
+		virtual std::vector<VarRef> list(void) = 0;
 
-		virtual std::vector<const Variable*> sort(
-			std::unordered_set<const Variable*>& pile
+		virtual std::vector<VarRef> sort(
+			std::unordered_set<VarRef>& pile
 		) = 0;
 	};
 
@@ -47,14 +49,14 @@ namespace Propcalc {
 	private:
 		std::mutex access;
 		std::map<std::string, std::unique_ptr<Variable>> cache;
-		std::vector<const Variable*> order;
+		std::vector<VarRef> order;
 
 	public:
-		virtual const Variable* get(std::string name);
-		virtual std::vector<const Variable*> list(void);
+		virtual VarRef get(std::string name);
+		virtual std::vector<VarRef> list(void);
 
-		virtual std::vector<const Variable*> sort(
-			std::unordered_set<const Variable*>& pile
+		virtual std::vector<VarRef> sort(
+			std::unordered_set<VarRef>& pile
 		);
 	};
 }

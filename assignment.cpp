@@ -18,7 +18,7 @@ using namespace std;
 
 namespace Propcalc {
 
-Assignment::Assignment(vector<const Variable*> vars) {
+Assignment::Assignment(vector<VarRef> vars) {
 	for (auto& v : vars) {
 		order.push_back(v);
 		assign.insert({ v, false });
@@ -26,7 +26,7 @@ Assignment::Assignment(vector<const Variable*> vars) {
 	overflow = order.size() == 0;
 }
 
-Assignment::Assignment(initializer_list<pair<const Variable*, bool>> il) {
+Assignment::Assignment(initializer_list<pair<VarRef, bool>> il) {
 	/* Order specified by the list */
 	for (auto& p : il) {
 		order.push_back(p.first);
@@ -35,12 +35,12 @@ Assignment::Assignment(initializer_list<pair<const Variable*, bool>> il) {
 	overflow = order.size() == 0;
 }
 
-bool Assignment::exists(const Variable* var) const {
+bool Assignment::exists(VarRef var) const {
 	return assign.count(var) > 0;
 }
 
-set<const Variable*> Assignment::set(void) const {
-	auto set = std::set<const Variable*>();
+set<VarRef> Assignment::set(void) const {
+	auto set = std::set<VarRef>();
 	for (auto& p : assign) {
 		if (p.second)
 			set.insert(p.first);

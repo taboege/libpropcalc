@@ -45,7 +45,7 @@ namespace Propcalc {
 			root(root)
 		{ }
 
-		std::vector<const Variable*> vars(void) const;
+		std::vector<VarRef> vars(void) const;
 		bool eval(const Assignment& assign) const { return root->eval(assign); }
 
 		Formula simplify(void) const { return this->simplify(Assignment()); }

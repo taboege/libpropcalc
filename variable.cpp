@@ -32,9 +32,9 @@ auto DefaultDomain = make_shared<Cache>();
  * Cache
  */
 
-const Variable* Cache::get(std::string name) {
+VarRef Cache::get(std::string name) {
 	const std::lock_guard<std::mutex> lock(access);
-	const Variable* var;
+	VarRef var;
 
 	auto it = cache.find(name);
 	if (it == cache.end()) {
@@ -49,14 +49,14 @@ const Variable* Cache::get(std::string name) {
 	return var;
 }
 
-vector<const Variable*> Cache::list(void) {
+vector<VarRef> Cache::list(void) {
 	const std::lock_guard<std::mutex> lock(access);
 	return order;
 }
 
-vector<const Variable*> Cache::sort(unordered_set<const Variable*>& pile) {
+vector<VarRef> Cache::sort(unordered_set<VarRef>& pile) {
 	const std::lock_guard<std::mutex> lock(access);
-	vector<const Variable*> vec;
+	vector<VarRef> vec;
 
 	/* Amortized linear in domain size */
 	for (auto& v : order) {

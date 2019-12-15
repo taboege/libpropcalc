@@ -23,28 +23,28 @@
 
 namespace Propcalc {
 	class Assignment {
-		std::vector<const Variable *> order;
-		std::unordered_map<const Variable*, bool> assign;
+		std::vector<VarRef> order;
+		std::unordered_map<VarRef, bool> assign;
 		bool overflow;
 
 	public:
 		Assignment() : overflow(true) { }
-		Assignment(std::vector<const Variable*> vars);
-		Assignment(std::initializer_list<std::pair<const Variable*, bool>> il);
+		Assignment(std::vector<VarRef> vars);
+		Assignment(std::initializer_list<std::pair<VarRef, bool>> il);
 
 		bool  overflown(void) const { return overflow; }
 		bool& overflown(void)       { return overflow; }
 
-		bool exists(const Variable* var) const;
-		std::set<const Variable*> set(void) const;
+		bool exists(VarRef var) const;
+		std::set<VarRef> set(void) const;
 
-		std::vector<const Variable *>& vars(void) { return order; }
+		std::vector<VarRef>& vars(void) { return order; }
 
 		Assignment  operator~(void) const;
 		Assignment& operator++(void);
 		Assignment  operator++(int);
-		bool&       operator[](const Variable *v);
-		bool        operator[](const Variable *v) const;
+		bool&       operator[](VarRef v);
+		bool        operator[](VarRef v) const;
 		bool&       operator[](size_t nr);
 		bool        operator[](size_t nr) const;
 	};

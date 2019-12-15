@@ -59,7 +59,7 @@ namespace Propcalc {
 		virtual Ast::Assoc assoc(void) const = 0;
 		virtual Ast::Prec  prec(void)  const = 0;
 
-		virtual void fill_vars(std::unordered_set<const Variable*>& pile) const = 0;
+		virtual void fill_vars(std::unordered_set<VarRef>& pile) const = 0;
 		virtual bool eval(const Assignment& assign) const = 0;
 		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const = 0;
 
@@ -87,7 +87,7 @@ namespace Propcalc {
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Non;     }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Symbolic; }
 
-		virtual void fill_vars(std::unordered_set<const Variable*>& pile) const { }
+		virtual void fill_vars(std::unordered_set<VarRef>& pile) const { }
 		virtual bool eval(const Assignment& assign) const { return value; }
 		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const {
 			return std::make_shared<Ast::Const>(value);
@@ -101,15 +101,15 @@ namespace Propcalc {
 
 	class Ast::Var : public Ast {
 	public:
-		const Variable* var;
+		VarRef var;
 
-		Var(const Variable* var) : var(var) { }
+		Var(VarRef var) : var(var) { }
 
 		virtual Ast::Type  type(void)  const { return Ast::Type::Var;      }
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Non;     }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Symbolic; }
 
-		virtual void fill_vars(std::unordered_set<const Variable*>& pile) const {
+		virtual void fill_vars(std::unordered_set<VarRef>& pile) const {
 			pile.insert(var);
 		}
 
@@ -139,7 +139,7 @@ namespace Propcalc {
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Non;   }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Notish; }
 
-		virtual void fill_vars(std::unordered_set<const Variable*>& pile) const {
+		virtual void fill_vars(std::unordered_set<VarRef>& pile) const {
 			rhs->fill_vars(pile);
 		}
 
@@ -163,7 +163,7 @@ namespace Propcalc {
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both;  }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Andish; }
 
-		virtual void fill_vars(std::unordered_set<const Variable*>& pile) const {
+		virtual void fill_vars(std::unordered_set<VarRef>& pile) const {
 			lhs->fill_vars(pile);
 			rhs->fill_vars(pile);
 		}
@@ -188,7 +188,7 @@ namespace Propcalc {
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both; }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Orish; }
 
-		virtual void fill_vars(std::unordered_set<const Variable*>& pile) const {
+		virtual void fill_vars(std::unordered_set<VarRef>& pile) const {
 			lhs->fill_vars(pile);
 			rhs->fill_vars(pile);
 		}
@@ -213,7 +213,7 @@ namespace Propcalc {
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Right;  }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Implish; }
 
-		virtual void fill_vars(std::unordered_set<const Variable*>& pile) const {
+		virtual void fill_vars(std::unordered_set<VarRef>& pile) const {
 			lhs->fill_vars(pile);
 			rhs->fill_vars(pile);
 		}
@@ -238,7 +238,7 @@ namespace Propcalc {
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both;  }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Eqvish; }
 
-		virtual void fill_vars(std::unordered_set<const Variable*>& pile) const {
+		virtual void fill_vars(std::unordered_set<VarRef>& pile) const {
 			lhs->fill_vars(pile);
 			rhs->fill_vars(pile);
 		}
@@ -263,7 +263,7 @@ namespace Propcalc {
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both;  }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Xorish; }
 
-		virtual void fill_vars(std::unordered_set<const Variable*>& pile) const {
+		virtual void fill_vars(std::unordered_set<VarRef>& pile) const {
 			lhs->fill_vars(pile);
 			rhs->fill_vars(pile);
 		}
