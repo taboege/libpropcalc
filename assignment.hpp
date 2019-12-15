@@ -38,7 +38,7 @@ namespace Propcalc {
 		bool exists(VarRef var) const;
 		std::set<VarRef> set(void) const;
 
-		std::vector<VarRef>& vars(void) { return order; }
+		const std::vector<VarRef>& vars(void) const { return order; }
 
 		Assignment  operator~(void) const;
 		Assignment& operator++(void);

@@ -44,7 +44,7 @@ namespace Propcalc {
 		 * useless here. FIXME: This is basically half a copy of Cache. */
 		class Domain {
 		private:
-			std::mutex access;
+			mutable std::mutex access;
 			std::map<
 				std::shared_ptr<Ast>,
 				std::unique_ptr<Tseitin::Variable>

@@ -37,27 +37,27 @@ namespace Propcalc {
 
 	class Domain {
 	public:
-		virtual VarRef get(std::string name)   = 0;
-		virtual std::vector<VarRef> list(void) = 0;
+		virtual VarRef resolve(std::string name)     = 0;
+		virtual std::vector<VarRef> list(void) const = 0;
 
 		virtual std::vector<VarRef> sort(
 			std::unordered_set<VarRef>& pile
-		) = 0;
+		) const = 0;
 	};
 
 	class Cache : public Domain {
 	private:
-		std::mutex access;
+		mutable std::mutex access;
 		std::map<std::string, std::unique_ptr<Variable>> cache;
 		std::vector<VarRef> order;
 
 	public:
-		virtual VarRef get(std::string name);
-		virtual std::vector<VarRef> list(void);
+		virtual VarRef resolve(std::string name);
+		virtual std::vector<VarRef> list(void) const;
 
 		virtual std::vector<VarRef> sort(
 			std::unordered_set<VarRef>& pile
-		);
+		) const;
 	};
 }
 

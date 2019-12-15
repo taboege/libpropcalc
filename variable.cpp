@@ -32,7 +32,7 @@ auto DefaultDomain = make_shared<Cache>();
  * Cache
  */
 
-VarRef Cache::get(std::string name) {
+VarRef Cache::resolve(std::string name) {
 	const std::lock_guard<std::mutex> lock(access);
 	VarRef var;
 
@@ -49,12 +49,12 @@ VarRef Cache::get(std::string name) {
 	return var;
 }
 
-vector<VarRef> Cache::list(void) {
+vector<VarRef> Cache::list(void) const {
 	const std::lock_guard<std::mutex> lock(access);
 	return order;
 }
 
-vector<VarRef> Cache::sort(unordered_set<VarRef>& pile) {
+vector<VarRef> Cache::sort(unordered_set<VarRef>& pile) const {
 	const std::lock_guard<std::mutex> lock(access);
 	vector<VarRef> vec;
 
