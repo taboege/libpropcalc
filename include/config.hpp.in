@@ -1,0 +1,24 @@
+/*
+ * config.hpp - libpropcalc compile-time configuration info
+ * This file is auto-generated at built time by CMake
+ */
+
+#ifndef PROPCALC_CONFIG_HPP
+#define PROPCALC_CONFIG_HPP
+
+#define __PROPCALC_MAKE_VERSION(major, minor, patch)	\
+	(major << 16 | minor << 8 | patch)
+
+#define PROPCALC_VERSION_API	@PROJECT_VERSION_MAJOR@
+#define PROPCALC_VERSION_MAJOR	@PROJECT_VERSION_MAJOR@
+#define PROPCALC_VERSION_MINOR	@PROJECT_VERSION_MINOR@
+#define PROPCALC_VERSION_PATCH	@PROJECT_VERSION_PATCH@
+
+#define PROPCALC_VERSION			\
+	__PROPCALC_MAKE_VERSION(		\
+		PROPCALC_VERSION_MAJOR,		\
+		PROPCALC_VERSION_MINOR,		\
+		PROPCALC_VERSION_PATCH		\
+	)
+
+#endif /* PROPCALC_CONFIG_HPP */

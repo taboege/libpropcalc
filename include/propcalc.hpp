@@ -15,11 +15,7 @@
 #ifndef PROPCALC_HPP
 #define PROPCALC_HPP
 
-#define __PROPCALC_MAKE_VERSION(api, major, minor)	\
-	(api << 16 | major << 8 | minor)
-
-#define PROPCALC_VERSION	__PROPCALC_MAKE_VERSION(0, 0, 1)
-
+#include <propcalc/config.hpp>
 #include <propcalc/ast.hpp>
 #include <propcalc/variable.hpp>
 #include <propcalc/assignment.hpp>
