@@ -87,9 +87,9 @@ namespace Propcalc {
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Non;     }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Symbolic; }
 
-		virtual void fill_vars(std::unordered_set<VarRef>& pile) const { }
-		virtual bool eval(const Assignment& assign) const { return value; }
-		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const {
+		virtual void fill_vars(std::unordered_set<VarRef>&) const { }
+		virtual bool eval(const Assignment&) const { return value; }
+		virtual std::shared_ptr<Ast> simplify(const Assignment&) const {
 			return std::make_shared<Ast::Const>(value);
 		}
 

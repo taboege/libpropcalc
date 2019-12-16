@@ -9,6 +9,10 @@ include(GNUInstallDirs)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+add_compile_options(
+	-Wall -Wextra -Werror
+)
+
 add_library(propcalc SHARED
 	core/variable.cpp
 	core/assignment.cpp
