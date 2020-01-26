@@ -26,7 +26,13 @@
 #include <propcalc/variable.hpp>
 
 namespace Propcalc {
-	class Tseitin : public Stream<Clause> {
+	// TODO: Turn this initializer list into a custom literal?
+	using ClauseData = std::initializer_list<std::pair<VarRef, bool>>;
+	static inline std::unique_ptr<Clause> make_clause(ClauseData&& cd) {
+		return std::make_unique<Clause>(std::forward<ClauseData>(cd));
+	}
+
+	class Tseitin : public Stream<Clause*> {
 		class Variable : public Propcalc::Variable {
 		public:
 			std::shared_ptr<Ast> ast;
@@ -71,8 +77,8 @@ namespace Propcalc {
 		Formula fm;
 		std::unique_ptr<Domain> vars;
 		std::queue<std::shared_ptr<Ast>> queue;
-		std::queue<Clause> clauses;
-		Clause last;
+		std::queue<std::unique_ptr<Clause>> clauses;
+		std::unique_ptr<Clause> last;
 
 	public:
 		Tseitin(const Formula& fm) : fm(fm) {
@@ -82,8 +88,7 @@ namespace Propcalc {
 		}
 
 		bool exhausted(void) const { return queue.size() == 0 && clauses.size() == 0; }
-		Clause  value(void)  { return last; }
-		Clause& clause(void) { return last; }
+		Clause* value(void)  { return last.get(); }
 
 		Tseitin& operator++(void) {
 			while (true) {
@@ -102,7 +107,7 @@ namespace Propcalc {
 					case Ast::Type::Const: {
 						auto C = static_cast<Ast::Const*>(ast.get());
 						auto c = vars->get(ast);
-						clauses.push(Clause({ {c, C->value} }));
+						clauses.push(make_clause({ {c, C->value} }));
 						break;
 					}
 
@@ -115,8 +120,8 @@ namespace Propcalc {
 						auto C = static_cast<Ast::Not*>(ast.get());
 						auto c = vars->get(ast);
 						auto a = vars->get(C->rhs);
-						clauses.push(Clause({ {a, false}, {c, false} }));
-						clauses.push(Clause({ {a,  true}, {c,  true} }));
+						clauses.push(make_clause({ {a, false}, {c, false} }));
+						clauses.push(make_clause({ {a,  true}, {c,  true} }));
 						queue.push(C->rhs);
 						break;
 					}
@@ -126,9 +131,9 @@ namespace Propcalc {
 						auto c = vars->get(ast);
 						auto a = vars->get(C->lhs);
 						auto b = vars->get(C->rhs);
-						clauses.push(Clause({ {a, false}, {b, false}, {c,  true} }));
-						clauses.push(Clause({ {a,  true},             {c, false} }));
-						clauses.push(Clause({             {b,  true}, {c, false} }));
+						clauses.push(make_clause({ {a, false}, {b, false}, {c,  true} }));
+						clauses.push(make_clause({ {a,  true},             {c, false} }));
+						clauses.push(make_clause({             {b,  true}, {c, false} }));
 						queue.push(C->lhs);
 						queue.push(C->rhs);
 						break;
@@ -139,9 +144,9 @@ namespace Propcalc {
 						auto c = vars->get(ast);
 						auto a = vars->get(C->lhs);
 						auto b = vars->get(C->rhs);
-						clauses.push(Clause({ {a,  true}, {b,  true}, {c, false} }));
-						clauses.push(Clause({ {a, false},             {c,  true} }));
-						clauses.push(Clause({             {b, false}, {c,  true} }));
+						clauses.push(make_clause({ {a,  true}, {b,  true}, {c, false} }));
+						clauses.push(make_clause({ {a, false},             {c,  true} }));
+						clauses.push(make_clause({             {b, false}, {c,  true} }));
 						queue.push(C->lhs);
 						queue.push(C->rhs);
 						break;
@@ -152,9 +157,9 @@ namespace Propcalc {
 						auto c = vars->get(ast);
 						auto a = vars->get(C->lhs);
 						auto b = vars->get(C->rhs);
-						clauses.push(Clause({ {a, false}, {b,  true}, {c, false} }));
-						clauses.push(Clause({ {a,  true},             {c,  true} }));
-						clauses.push(Clause({             {b, false}, {c,  true} }));
+						clauses.push(make_clause({ {a, false}, {b,  true}, {c, false} }));
+						clauses.push(make_clause({ {a,  true},             {c,  true} }));
+						clauses.push(make_clause({             {b, false}, {c,  true} }));
 						queue.push(C->lhs);
 						queue.push(C->rhs);
 						break;
@@ -165,10 +170,10 @@ namespace Propcalc {
 						auto c = vars->get(ast);
 						auto a = vars->get(C->lhs);
 						auto b = vars->get(C->rhs);
-						clauses.push(Clause({ {a, false}, {b, false}, {c,  true} }));
-						clauses.push(Clause({ {a,  true}, {b,  true}, {c,  true} }));
-						clauses.push(Clause({ {a,  true}, {b, false}, {c, false} }));
-						clauses.push(Clause({ {a, false}, {b,  true}, {c, false} }));
+						clauses.push(make_clause({ {a, false}, {b, false}, {c,  true} }));
+						clauses.push(make_clause({ {a,  true}, {b,  true}, {c,  true} }));
+						clauses.push(make_clause({ {a,  true}, {b, false}, {c, false} }));
+						clauses.push(make_clause({ {a, false}, {b,  true}, {c, false} }));
 						queue.push(C->lhs);
 						queue.push(C->rhs);
 						break;
@@ -179,10 +184,10 @@ namespace Propcalc {
 						auto c = vars->get(ast);
 						auto a = vars->get(C->lhs);
 						auto b = vars->get(C->rhs);
-						clauses.push(Clause({ {a, false}, {b, false}, {c, false} }));
-						clauses.push(Clause({ {a,  true}, {b,  true}, {c, false} }));
-						clauses.push(Clause({ {a,  true}, {b, false}, {c,  true} }));
-						clauses.push(Clause({ {a, false}, {b,  true}, {c,  true} }));
+						clauses.push(make_clause({ {a, false}, {b, false}, {c, false} }));
+						clauses.push(make_clause({ {a,  true}, {b,  true}, {c, false} }));
+						clauses.push(make_clause({ {a,  true}, {b, false}, {c,  true} }));
+						clauses.push(make_clause({ {a, false}, {b,  true}, {c,  true} }));
 						queue.push(C->lhs);
 						queue.push(C->rhs);
 						break;

@@ -76,10 +76,10 @@ int main(int argc, char* argv[]) {
 	while (!cnf.exhausted()) {
 		cout << "{ ";
 		int i = 0;
-		for (auto& v : cnf.clause().vars()) {
+		for (auto& v : cnf.value()->vars()) {
 			if (i++)
 				cout << "& ";
-			cout << (cnf.clause()[v] ? "" : "~") << v->name << " ";
+			cout << ((*cnf.value())[v] ? "" : "~") << v->name << " ";
 		}
 		cout << "}" << endl;
 		++cnf;
@@ -91,10 +91,10 @@ int main(int argc, char* argv[]) {
 	while (!tsei.exhausted()) {
 		cout << "{ ";
 		int i = 0;
-		for (auto& v : tsei.clause().vars()) {
+		for (auto& v : tsei.value()->vars()) {
 			if (i++)
 				cout << "& ";
-			cout << (tsei.clause()[v] ? "" : "~") << v->name << " ";
+			cout << ((*tsei.value())[v] ? "" : "~") << v->name << " ";
 		}
 		cout << "}" << endl;
 		++tsei;
