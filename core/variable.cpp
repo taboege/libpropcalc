@@ -22,13 +22,6 @@ using namespace std;
 namespace Propcalc {
 
 /*
- * DefaultDomain is a Cache object. It is the default global domain for
- * Variables used by the Formula parser.
- */
-
-auto DefaultDomain = make_shared<Cache>();
-
-/*
  * Cache
  */
 

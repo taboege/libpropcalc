@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
 
 	cout << "seen the following variables:" << endl;
 	size_t i = 0;
-	for (auto& v : Propcalc::DefaultDomain->list())
+	for (auto& v : Propcalc::Formula::DefaultDomain->list())
 		cout << v->to_string() << ": " << i++ << endl;
 	cout << endl;
 

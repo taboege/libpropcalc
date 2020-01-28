@@ -1,7 +1,7 @@
 /*
  * formula.cpp - Formula class, parser
  *
- * Copyright (C) 2019 Tobias Boege
+ * Copyright (C) 2019-2020 Tobias Boege
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the Artistic License 2.0
@@ -28,6 +28,9 @@
 using namespace std;
 
 namespace Propcalc {
+
+/* Initialize the Formula ctor's default Domain. */
+shared_ptr<Cache> Formula::DefaultDomain = make_shared<Cache>();
 
 enum optype {
 	OP_CONST,    /* Constant       */

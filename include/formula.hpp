@@ -1,7 +1,7 @@
 /*
  * formula.hpp - Formula class, parser
  *
- * Copyright (C) 2019 Tobias Boege
+ * Copyright (C) 2019-2020 Tobias Boege
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the Artistic License 2.0
@@ -24,8 +24,6 @@
 #include <propcalc/assignment.hpp>
 
 namespace Propcalc {
-	extern std::shared_ptr<Cache> DefaultDomain;
-
 	class Truthtable;
 	class Tseitin;
 	class CNF;
@@ -39,6 +37,12 @@ namespace Propcalc {
 		friend class CNF;
 
 	public:
+		/*
+		 * DefaultDomain is the default global domain for
+		 * Variables used by the Formula parser.
+		 */
+		static std::shared_ptr<Cache> DefaultDomain;
+
 		Formula(std::string fm, std::shared_ptr<Domain> domain = DefaultDomain);
 		Formula(std::shared_ptr<Ast> root, std::shared_ptr<Domain> domain = DefaultDomain) :
 			domain(domain),
