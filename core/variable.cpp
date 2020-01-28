@@ -53,7 +53,7 @@ VarNr Cache::pack(VarRef var) {
 
 VarRef Cache::unpack(VarNr nr) {
 	const std::lock_guard<std::mutex> lock(access);
-	return by_nr[nr];
+	return by_nr[nr - 1];
 }
 
 vector<VarRef> Cache::list(void) const {
