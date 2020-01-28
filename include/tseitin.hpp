@@ -1,7 +1,7 @@
 /*
  * tseitin.hpp - Tseitin transform
  *
- * Copyright (C) 2019 Tobias Boege
+ * Copyright (C) 2019-2020 Tobias Boege
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the Artistic License 2.0
@@ -32,7 +32,7 @@ namespace Propcalc {
 		return std::make_unique<Clause>(std::forward<ClauseData>(cd));
 	}
 
-	class Tseitin : public Stream<Clause*> {
+	class Tseitin : public Stream<const Clause&> {
 		class Variable : public Propcalc::Variable {
 		public:
 			std::shared_ptr<Ast> ast;
@@ -87,8 +87,13 @@ namespace Propcalc {
 			++*this; /* make the first clause available */
 		}
 
-		bool exhausted(void) const { return queue.size() == 0 && clauses.size() == 0; }
-		Clause* value(void)  { return last.get(); }
+		operator bool(void) const {
+			return queue.size() > 0 || clauses.size() > 0;
+		}
+
+		Clause& operator*(void) const {
+			return *last;
+		}
 
 		Tseitin& operator++(void) {
 			while (true) {

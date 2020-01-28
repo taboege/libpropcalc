@@ -49,55 +49,47 @@ int main(int argc, char* argv[]) {
 	cout << endl;
 
 	cout << "truth table of " << fm.to_infix() << ":" << endl;
-	auto tt = fm.truthtable();
-	while (!tt.exhausted()) {
-		for (size_t i = 1; i <= tt.assigned().vars().size(); ++i)
-			cout << tt.assigned()[i];
-		cout << ": " << tt.value() << endl;
-		++tt;
+	for (const auto& [assigned, value] : fm.truthtable()) {
+		for (size_t i = 1; i <= assigned.vars().size(); ++i)
+			cout << assigned[i];
+		cout << ": " << value << endl;
 	}
 	cout << endl;
 
 	cout << "satisfying assignments of " << fm.to_infix() << ":" << endl;
-	tt = fm.truthtable();
-	while (!tt.exhausted()) {
-		if (tt.value()) {
+	for (const auto& [assigned, value] : fm.truthtable()) {
+		if (value) {
 			cout << "{ ";
-			for (auto& v : tt.assigned().set())
+			for (auto& v : assigned.set())
 				cout << v->name << " ";
 			cout << "}" << endl;
 		}
-		++tt;
 	}
 	cout << endl;
 
 	cout << "CNF clauses of " << fm.to_infix() << ":" << endl;
-	auto cnf = fm.cnf();
-	while (!cnf.exhausted()) {
+	for (auto& clause : fm.cnf()) {
 		cout << "{ ";
 		int i = 0;
-		for (auto& v : cnf.value()->vars()) {
+		for (auto& v : clause.vars()) {
 			if (i++)
 				cout << "& ";
-			cout << ((*cnf.value())[v] ? "" : "~") << v->name << " ";
+			cout << (clause[v] ? "" : "~") << v->name << " ";
 		}
 		cout << "}" << endl;
-		++cnf;
 	}
 	cout << endl;
 
 	cout << "Tseitin transform of " << fm.to_infix() << ":" << endl;
-	auto tsei = fm.tseitin();
-	while (!tsei.exhausted()) {
+	for (auto& clause : fm.tseitin()) {
 		cout << "{ ";
 		int i = 0;
-		for (auto& v : tsei.value()->vars()) {
+		for (auto& v : clause.vars()) {
 			if (i++)
 				cout << "& ";
-			cout << ((*tsei.value())[v] ? "" : "~") << v->name << " ";
+			cout << (clause[v] ? "" : "~") << v->name << " ";
 		}
 		cout << "}" << endl;
-		++tsei;
 	}
 	cout << endl;
 

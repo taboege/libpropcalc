@@ -1,7 +1,7 @@
 /*
  * cnf.hpp - CNF clause stream
  *
- * Copyright (C) 2019 Tobias Boege
+ * Copyright (C) 2019-2020 Tobias Boege
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the Artistic License 2.0
@@ -25,7 +25,7 @@
 #include <propcalc/assignment.hpp>
 
 namespace Propcalc {
-	class CNF : public Stream<Clause*> {
+	class CNF : public Stream<const Clause&> {
 		Formula fm;
 		std::queue<std::shared_ptr<Ast>> queue;
 		std::shared_ptr<Ast> current = nullptr;
@@ -48,9 +48,13 @@ namespace Propcalc {
 			++*this; /* forward to the first clause */
 		}
 
-		bool exhausted(void) const { return queue.size() == 0 && current == nullptr; }
-		Clause* value(void)  { return &cl; }
-		Clause& clause(void) { return  cl; }
+		operator bool(void) const {
+			return queue.size() > 0 || current != nullptr;
+		}
+
+		const Clause& operator*(void) const {
+			return cl;
+		}
 
 		CNF& operator++(void) {
 			while (true) {

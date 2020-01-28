@@ -1,7 +1,7 @@
 /*
  * truthtable.hpp - Truthtable
  *
- * Copyright (C) 2019 Tobias Boege
+ * Copyright (C) 2019-2020 Tobias Boege
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the Artistic License 2.0
@@ -20,19 +20,24 @@
 #include <propcalc/assignment.hpp>
 
 namespace Propcalc {
-	class Truthtable : public Stream<bool> {
+	class Truthtable : public Stream<std::pair<Assignment, bool>> {
 		Formula fm;
 		Assignment last;
 
 	public:
 		Truthtable(const Formula& fm) :
-			fm(fm),
-			last(Assignment(fm.vars()))
-		{ }
+			fm(fm), last(fm.vars()) { }
 
-		bool exhausted(void) const { return last.overflown(); }
-		bool value(void)           { return fm.eval(last); }
-		Assignment& assigned(void) { return last; }
+		bool eval(void) const { return fm.eval(last); }
+		const Assignment& assigned(void) const { return last; }
+
+		std::pair<Assignment, bool> operator*(void) const {
+			return std::make_pair(this->assigned(), this->eval());
+		}
+
+		operator bool(void) const {
+			return last.overflown();
+		}
 
 		Truthtable& operator++(void) {
 			++last;
