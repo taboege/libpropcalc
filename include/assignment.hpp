@@ -45,8 +45,8 @@ namespace Propcalc {
 		Assignment  operator++(int);
 		bool&       operator[](VarRef v);
 		bool        operator[](VarRef v) const;
-		bool&       operator[](size_t nr);
-		bool        operator[](size_t nr) const;
+		bool&       operator[](VarNr nr);
+		bool        operator[](VarNr nr) const;
 	};
 }
 

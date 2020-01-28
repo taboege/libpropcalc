@@ -83,11 +83,11 @@ bool Assignment::operator[](const Variable *v) const {
 	return assign.at(v);
 }
 
-bool& Assignment::operator[](size_t nr) {
+bool& Assignment::operator[](VarNr nr) {
 	return assign.at(order[nr - 1]);
 }
 
-bool Assignment::operator[](size_t nr) const {
+bool Assignment::operator[](VarNr nr) const {
 	return assign.at(order[nr - 1]);
 }
 
