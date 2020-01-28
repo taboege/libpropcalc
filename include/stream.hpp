@@ -1,5 +1,5 @@
 /*
- * stream.hpp - Stream
+ * stream.hpp - Stream, lazy stateful generator of values
  *
  * Copyright (C) 2019-2020 Tobias Boege
  *

@@ -1,7 +1,7 @@
 /*
  * variable.hpp - Variable and Domain
  *
- * Copyright (C) 2019 Tobias Boege
+ * Copyright (C) 2019-2020 Tobias Boege
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the Artistic License 2.0
@@ -33,31 +33,37 @@ namespace Propcalc {
 		virtual std::string to_string(void) const { return "[" + name + "]"; }
 	};
 
+	using VarNr  = unsigned int;
 	using VarRef = const Variable*;
 
 	class Domain {
 	public:
-		virtual VarRef resolve(std::string name)     = 0;
-		virtual std::vector<VarRef> list(void) const = 0;
+		virtual std::string name(VarRef var) { return var->name; }
+		virtual VarRef resolve(std::string name) = 0;
+		virtual VarNr  pack(VarRef var)          = 0;
+		virtual VarRef unpack(VarNr nr)          = 0;
 
-		virtual std::vector<VarRef> sort(
-			std::unordered_set<VarRef>& pile
-		) const = 0;
+		virtual std::vector<VarRef> list(void) const = 0;
+		virtual size_t size(void) const = 0;
+		virtual std::vector<VarRef> sort(std::unordered_set<VarRef>& pile) const = 0;
 	};
 
 	class Cache : public Domain {
 	private:
 		mutable std::mutex access;
-		std::map<std::string, std::unique_ptr<Variable>> cache;
-		std::vector<VarRef> order;
+		std::vector<std::unique_ptr<Variable>> cache;
+		std::map<std::string, VarRef> by_name;
+		std::vector<VarRef> by_nr;
+		std::map<VarRef, VarNr> by_ref;
 
 	public:
 		virtual VarRef resolve(std::string name);
-		virtual std::vector<VarRef> list(void) const;
+		virtual VarNr  pack(VarRef var);
+		virtual VarRef unpack(VarNr nr);
 
-		virtual std::vector<VarRef> sort(
-			std::unordered_set<VarRef>& pile
-		) const;
+		virtual std::vector<VarRef> list(void) const;
+		virtual size_t size(void) const;
+		virtual std::vector<VarRef> sort(std::unordered_set<VarRef>& pile) const;
 	};
 }
 
