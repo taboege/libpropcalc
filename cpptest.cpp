@@ -82,7 +82,7 @@ int main(int argc, char* argv[]) {
 		int i = 0;
 		for (auto& v : clause.vars()) {
 			if (i++)
-				cout << "& ";
+				cout << "| ";
 			cout << (clause[v] ? "" : "~") << v->name << " ";
 		}
 		cout << "}" << endl;
@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
 		int i = 0;
 		for (auto& v : clause.vars()) {
 			if (i++)
-				cout << "& ";
+				cout << "| ";
 			cout << (clause[v] ? "" : "~") << v->name << " ";
 		}
 		cout << "}" << endl;

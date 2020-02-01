@@ -41,8 +41,8 @@ pair<VarNr, VarRef> Cache::new_variable(string name) {
 
 VarRef Cache::resolve(std::string name) {
 	const std::lock_guard<std::mutex> lock(access);
-	VarRef var;
 
+	VarRef var;
 	auto it = by_name.find(name);
 	if (it == by_name.end()) {
 		tie(ignore, var) = this->new_variable(name);
@@ -60,6 +60,7 @@ VarNr Cache::pack(VarRef var) {
 
 VarRef Cache::unpack(VarNr nr) {
 	const std::lock_guard<std::mutex> lock(access);
+
 	auto max = cache.size();
 	while (max < nr) {
 		tie(max, ignore) = this->new_variable(to_string(max + 1));

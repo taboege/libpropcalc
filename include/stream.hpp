@@ -92,8 +92,9 @@ namespace Propcalc {
 			return cache.size();
 		}
 
-		void reset(void) {
+		Cached& reset(void) {
 			i = 0;
+			return *this;
 		}
 
 		virtual iterator begin(void) {
