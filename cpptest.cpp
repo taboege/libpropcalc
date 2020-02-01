@@ -5,6 +5,14 @@
 
 using namespace std;
 
+template<typename T>
+static size_t count_stream(Propcalc::Stream<T>& st) {
+	size_t size = 0;
+	for ([[maybe_unused]] auto v : st)
+		size++;
+	return size;
+}
+
 int main(int argc, char* argv[]) {
 	if (argc < 2) {
 		cerr << "no formula given" << endl;
@@ -69,7 +77,7 @@ int main(int argc, char* argv[]) {
 	cout << endl;
 
 	cout << "CNF clauses of " << fm.to_infix() << ":" << endl;
-	for (auto& clause : fm.cnf()) {
+	for (auto clause : fm.cnf()) {
 		cout << "{ ";
 		int i = 0;
 		for (auto& v : clause.vars()) {
@@ -82,7 +90,7 @@ int main(int argc, char* argv[]) {
 	cout << endl;
 
 	cout << "Tseitin transform of " << fm.to_infix() << ":" << endl;
-	for (auto& clause : fm.tseitin()) {
+	for (auto clause : fm.tseitin()) {
 		cout << "{ ";
 		int i = 0;
 		for (auto& v : clause.vars()) {
@@ -103,6 +111,16 @@ int main(int argc, char* argv[]) {
 		Propcalc::VarNr i = 1;
 		for (auto& v : Propcalc::Formula::DefaultDomain->list())
 			cout << v->to_string() << ": " << i++ << endl;
+	}
+	cout << endl;
+
+	{
+		auto cnf = fm.cnf();
+		cout << "Number of CNF clauses: " << count_stream(cnf) << endl;
+		cout << "Counting again:        " << count_stream(cnf) << endl;
+		auto cache = fm.cnf().cache();
+		cout << "Number of CNF clauses (cached): " << count_stream(cache) << endl;
+		cout << "Counting again (cached):        " << count_stream(cache) << endl;
 	}
 	cout << endl;
 

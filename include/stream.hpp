@@ -15,6 +15,8 @@
 #ifndef PROPCALC_STREAM_HPP
 #define PROPCALC_STREAM_HPP
 
+#include <vector>
+
 namespace Propcalc {
 	template<typename T>
 	class Stream {
@@ -23,37 +25,81 @@ namespace Propcalc {
 		virtual Stream<T>& operator++(void) = 0;
 		virtual operator bool(void) const   = 0;
 
-		class iterator {
-			Stream<T>* st;
+		class iterator;
+		class Cached;
 
-		public:
-			using iterator_category = std::forward_iterator_tag;
-			using value_type = T;
-			//using difference_type = std::ptrdiff_t;
-			//using pointer = T*;
-			//using reference = T&;
+		virtual iterator begin(void) { return iterator(this); }
+		virtual iterator end(void)   { return iterator();     }
 
-			iterator(Stream<T>* st) : st(st) { }
-			iterator(void)     : st(nullptr) { }
+		Cached cache(void) { return Cached(this); }
+	};
 
-			bool operator!=(iterator& b) const {
-				if (!b.st)
-					return !!*st;
-				throw "comparing stream iterators";
-			}
+	template<typename T>
+	class Stream<T>::iterator {
+		Stream<T>* st;
 
-			T operator*(void) const {
-				return **st;
-			}
+	public:
+		using iterator_category = std::forward_iterator_tag;
+		using value_type = T;
+		using difference_type = std::ptrdiff_t;
+		using pointer = T*;
+		using reference = T&;
 
-			iterator& operator++(void) {
-				++*st;
-				return *this;
-			}
-		};
+		iterator(Stream<T>* st) : st(st) { }
+		iterator(void)     : st(nullptr) { }
 
-		iterator begin(void) { return iterator(this); }
-		iterator end(void)   { return iterator();     }
+		bool operator!=(iterator& b) const {
+			if (!b.st)
+				return !!*st;
+			throw "comparing stream iterators";
+		}
+
+		T operator*(void) const {
+			return **st;
+		}
+
+		iterator& operator++(void) {
+			++*st;
+			return *this;
+		}
+	};
+
+	template<typename T>
+	class Stream<T>::Cached : public Stream<T> {
+		std::vector<T> cache;
+		unsigned int i = 0;
+
+	public:
+		Cached(Stream<T>* st) {
+			for (auto c : *st)
+				cache.push_back(c);
+		}
+
+		operator bool(void) const {
+			return i < cache.size();
+		}
+
+		T operator*(void) const {
+			return cache[i];
+		}
+
+		Cached& operator++(void) {
+			++i;
+			return *this;
+		}
+
+		size_t size(void) const {
+			return cache.size();
+		}
+
+		void reset(void) {
+			i = 0;
+		}
+
+		virtual iterator begin(void) {
+			this->reset();
+			return iterator(this);
+		}
 	};
 }
 

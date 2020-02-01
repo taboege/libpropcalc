@@ -25,7 +25,7 @@
 #include <propcalc/assignment.hpp>
 
 namespace Propcalc {
-	class CNF : public Stream<const Clause&> {
+	class CNF : public Stream<Clause> {
 		Formula fm;
 		std::queue<std::shared_ptr<Ast>> queue;
 		std::shared_ptr<Ast> current = nullptr;
@@ -52,7 +52,7 @@ namespace Propcalc {
 			return queue.size() > 0 || current != nullptr;
 		}
 
-		const Clause& operator*(void) const {
+		Clause operator*(void) const {
 			return cl;
 		}
 

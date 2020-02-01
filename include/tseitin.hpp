@@ -32,7 +32,7 @@ namespace Propcalc {
 		return std::make_unique<Clause>(std::forward<ClauseData>(cd));
 	}
 
-	class Tseitin : public Stream<const Clause&> {
+	class Tseitin : public Stream<Clause> {
 		class Variable : public Propcalc::Variable {
 		public:
 			std::shared_ptr<Ast> ast;
@@ -91,7 +91,7 @@ namespace Propcalc {
 			return queue.size() > 0 || clauses.size() > 0;
 		}
 
-		Clause& operator*(void) const {
+		Clause operator*(void) const {
 			return *last;
 		}
 
