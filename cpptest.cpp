@@ -50,8 +50,8 @@ int main(int argc, char* argv[]) {
 		for (auto& v : vars)
 			cout << v->name << ": " << assign[v] << " ";
 		cout << "(short: ";
-		for (size_t i = 1; i <= assign.vars().size(); ++i)
-			cout << assign[i];
+		for (auto& v : assign.vars())
+			cout << assign[v];
 		cout << ")" << endl;
 		++assign;
 	}
@@ -59,8 +59,8 @@ int main(int argc, char* argv[]) {
 
 	cout << "truth table of " << fm.to_infix() << ":" << endl;
 	for (const auto& [assigned, value] : fm.truthtable()) {
-		for (size_t i = 1; i <= assigned.vars().size(); ++i)
-			cout << assigned[i];
+		for (auto& v : assigned.vars())
+			cout << assigned[v];
 		cout << ": " << value << endl;
 	}
 	cout << endl;

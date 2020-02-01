@@ -76,19 +76,13 @@ Assignment Assignment::operator++(int) {
 }
 
 bool& Assignment::operator[](VarRef v) {
-	return assign.at(v);
+	if (not assign.count(v))
+		order.push_back(v);
+	return assign[v];
 }
 
 bool Assignment::operator[](VarRef v) const {
 	return assign.at(v);
-}
-
-bool& Assignment::operator[](VarNr nr) {
-	return assign.at(order[nr - 1]);
-}
-
-bool Assignment::operator[](VarNr nr) const {
-	return assign.at(order[nr - 1]);
 }
 
 }
