@@ -1,7 +1,7 @@
 /*
  * assignment.cpp - Assignment
  *
- * Copyright (C) 2019 Tobias Boege
+ * Copyright (C) 2019-2020 Tobias Boege
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the Artistic License 2.0
@@ -75,11 +75,11 @@ Assignment Assignment::operator++(int) {
 	return tmp;
 }
 
-bool& Assignment::operator[](const Variable *v) {
+bool& Assignment::operator[](VarRef v) {
 	return assign.at(v);
 }
 
-bool Assignment::operator[](const Variable *v) const {
+bool Assignment::operator[](VarRef v) const {
 	return assign.at(v);
 }
 
