@@ -279,6 +279,50 @@ Formula::Formula(string fm, shared_ptr<Domain> domain) :
 	root(parse(fm.c_str(), domain))
 { }
 
+static shared_ptr<Ast> clause_ast(Clause& cl) {
+	vector<shared_ptr<Ast>> lits;
+	for (auto& v : cl.vars()) {
+		shared_ptr<Ast> astsp = make_shared<Ast::Var>(v);
+		if (not cl[v])
+			astsp = make_shared<Ast::Not>(astsp);
+		lits.push_back(astsp);
+	}
+
+	/* Empty clause is false (the identity of disjunction) */
+	if (lits.size() == 0)
+		return make_shared<Ast::Const>(false);
+
+	auto astsp = lits.back();
+	lits.pop_back();
+	for (auto it = lits.rbegin(); it != lits.rend(); ++it)
+		astsp = make_shared<Ast::Or>(*it, astsp);
+	return astsp;
+}
+
+Formula::Formula(Clause& cl, shared_ptr<Domain> domain) :
+	domain(domain) {
+	root = clause_ast(cl);
+}
+
+Formula::Formula(Stream<Clause>& clauses, shared_ptr<Domain> domain) :
+	domain(domain) {
+	vector<shared_ptr<Ast>> cls;
+	for (auto cl : clauses)
+		cls.push_back(clause_ast(cl));
+
+	/* Empty CNF is true (the identity of conjunction) */
+	if (cls.size() == 0) {
+		root = make_shared<Ast::Const>(true);
+		return;
+	}
+
+	auto astsp = cls.back();
+	cls.pop_back();
+	for (auto it = cls.rbegin(); it != cls.rend(); ++it)
+		astsp = make_shared<Ast::And>(*it, astsp);
+	root = astsp;
+}
+
 vector<VarRef> Formula::vars(void) const {
 	unordered_set<const Variable *> pile;
 	root->fill_vars(pile);

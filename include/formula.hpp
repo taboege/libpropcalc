@@ -22,6 +22,8 @@
 #include <propcalc/ast.hpp>
 #include <propcalc/variable.hpp>
 #include <propcalc/assignment.hpp>
+#include <propcalc/clause.hpp>
+#include <propcalc/stream.hpp>
 
 namespace Propcalc {
 	class Truthtable;
@@ -43,11 +45,18 @@ namespace Propcalc {
 		 */
 		static std::shared_ptr<Cache> DefaultDomain;
 
+		/* Parse a formula */
 		Formula(std::string fm, std::shared_ptr<Domain> domain = DefaultDomain);
+
+		/* Wrap existing AST in a formula */
 		Formula(std::shared_ptr<Ast> root, std::shared_ptr<Domain> domain = DefaultDomain) :
 			domain(domain),
 			root(root)
 		{ }
+
+		/* Make a formula from a CNF clause or stream of clauses */
+		Formula(Clause& cl, std::shared_ptr<Domain> domain);
+		Formula(Stream<Clause>& clauses, std::shared_ptr<Domain> domain);
 
 		std::vector<VarRef> vars(void) const;
 		bool eval(const Assignment& assign) const { return root->eval(assign); }
