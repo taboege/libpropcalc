@@ -29,10 +29,11 @@ int main(int argc, char* argv[]) {
 	cout << (fm1 & fm3 & fm2).to_infix() << endl;
 	cout << endl;
 
-	cout << "seen the following variables:" << endl;
-	size_t i = 0;
-	for (auto& v : Propcalc::Formula::DefaultDomain->list())
-		cout << v->to_string() << ": " << i++ << endl;
+	cout << "seen the following variables:" << endl; {
+		Propcalc::VarNr i = 1;
+		for (auto& v : Propcalc::Formula::DefaultDomain->list())
+			cout << v->to_string() << ": " << i++ << endl;
+	}
 	cout << endl;
 
 	auto vars = fm.vars();
@@ -95,6 +96,15 @@ int main(int argc, char* argv[]) {
 
 	cout << "Original   formula: " << fm.to_infix() << endl;
 	cout << "Simplified formula: " << fm.simplify().to_infix() << endl;
+	cout << endl;
+
+	cout << "Allocating many variables using unpack:" << endl; {
+		Propcalc::Formula::DefaultDomain->unpack(15);
+		Propcalc::VarNr i = 1;
+		for (auto& v : Propcalc::Formula::DefaultDomain->list())
+			cout << v->to_string() << ": " << i++ << endl;
+	}
+	cout << endl;
 
 	return 0;
 }

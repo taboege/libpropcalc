@@ -56,6 +56,8 @@ namespace Propcalc {
 		std::vector<VarRef> by_nr;
 		std::map<VarRef, VarNr> by_ref;
 
+		std::pair<VarNr, VarRef> new_variable(std::string name);
+
 	public:
 		virtual VarRef resolve(std::string name);
 		virtual VarNr  pack(VarRef var);
