@@ -36,7 +36,7 @@ namespace Propcalc {
 		}
 
 		operator bool(void) const {
-			return last.overflown();
+			return !last.overflown();
 		}
 
 		Truthtable& operator++(void) {
