@@ -29,6 +29,7 @@ namespace Propcalc {
 
 		Variable(std::string name) : name(name) { }
 		Variable(const char* s, size_t len) : name(s, len) { }
+		virtual ~Variable(void) { }
 
 		virtual std::string to_string(void) const { return "[" + name + "]"; }
 	};
@@ -50,15 +51,19 @@ namespace Propcalc {
 
 	class Cache : public Domain {
 	private:
-		mutable std::mutex access;
 		std::vector<std::unique_ptr<Variable>> cache;
 		std::map<std::string, VarRef> by_name;
 		std::vector<VarRef> by_nr;
 		std::map<VarRef, VarNr> by_ref;
 
+	protected:
+		mutable std::mutex access;
 		std::pair<VarNr, VarRef> new_variable(std::string name);
+		std::pair<VarNr, VarRef> put_variable(std::unique_ptr<Variable> uvar);
 
 	public:
+		virtual ~Cache(void) { }
+
 		virtual VarRef resolve(std::string name);
 		virtual VarNr  pack(VarRef var);
 		virtual VarRef unpack(VarNr nr);

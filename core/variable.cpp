@@ -28,9 +28,14 @@ namespace Propcalc {
 /* Needs the lock to be held! */
 pair<VarNr, VarRef> Cache::new_variable(string name) {
 	auto uvar = make_unique<Variable>(name);
+	return this->put_variable(move(uvar));
+}
+
+/* Needs the lock to be held! */
+pair<VarNr, VarRef> Cache::put_variable(unique_ptr<Variable> uvar) {
 	VarRef var = uvar.get();
 	cache.push_back(move(uvar));
-	by_name.insert({ name, var });
+	by_name.insert({ var->name, var });
 	by_nr.push_back(var);
 	/* VarNr are 1-based, so by_nr.size() after the
 	 * push_back() we just did is the right thing. */

@@ -45,30 +45,23 @@ namespace Propcalc {
 			{ }
 		};
 
-		/* This is not a real Domain because we don't create formulas from
-		 * Tseitin, but a stream of clauses. The full domain interface is
-		 * useless here. FIXME: This is basically half a copy of Cache. */
-		class Domain {
+		class Domain : public Cache {
 		private:
-			mutable std::mutex access;
-			std::map<
-				std::shared_ptr<Ast>,
-				std::unique_ptr<Tseitin::Variable>
-			> cache;
+			std::map<std::shared_ptr<Ast>, VarRef> astcache;
 
 		public:
 			VarRef get(std::shared_ptr<Ast> ast) {
 				const std::lock_guard<std::mutex> lock(access);
-				VarRef var;
 
-				auto it = cache.find(ast);
-				if (it == cache.end()) {
+				VarRef var;
+				auto it = astcache.find(ast);
+				if (it == astcache.end()) {
 					auto uvar = std::make_unique<Tseitin::Variable>(ast);
-					var = uvar.get();
-					cache.insert({ ast, std::move(uvar) });
+					std::tie(std::ignore, var) = this->put_variable(std::move(uvar));
+					astcache.insert({ ast, var });
 				}
 				else {
-					var = it->second.get();
+					var = it->second;
 				}
 				return var;
 			}
