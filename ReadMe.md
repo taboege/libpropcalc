@@ -11,7 +11,7 @@ of in Perl.
 - [X] Formula parsing and printing
 - [X] Evaluation and truth tables
 - [X] CNF conversion
-- [ ] DIMACS import/export
+- [X] DIMACS import/export
 - [ ] Documentation and tests
 
 **v0.2:**

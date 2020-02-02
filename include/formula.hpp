@@ -58,6 +58,7 @@ namespace Propcalc {
 		Formula(Clause& cl, std::shared_ptr<Domain> domain);
 		Formula(Stream<Clause>& clauses, std::shared_ptr<Domain> domain);
 
+		std::shared_ptr<Domain> get_domain() { return domain; }
 		std::vector<VarRef> vars(void) const;
 		bool eval(const Assignment& assign) const { return root->eval(assign); }
 

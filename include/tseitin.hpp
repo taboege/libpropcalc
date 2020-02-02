@@ -68,16 +68,20 @@ namespace Propcalc {
 		};
 
 		Formula fm;
-		std::unique_ptr<Domain> vars;
+		std::shared_ptr<Tseitin::Domain> vars;
 		std::queue<std::shared_ptr<Ast>> queue;
 		std::queue<std::unique_ptr<Clause>> clauses;
 		std::unique_ptr<Clause> last;
 
 	public:
 		Tseitin(const Formula& fm) : fm(fm) {
-			vars = std::make_unique<Domain>();
+			vars = std::make_shared<Tseitin::Domain>();
 			queue.push(fm.root);
 			++*this; /* make the first clause available */
+		}
+
+		std::shared_ptr<Propcalc::Domain> get_domain() {
+			return vars;
 		}
 
 		operator bool(void) const {

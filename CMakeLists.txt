@@ -18,6 +18,7 @@ add_library(propcalc SHARED
 	core/assignment.cpp
 	core/ast.cpp
 	core/formula.cpp
+	core/dimacs.cpp
 )
 
 configure_file(libpropcalc.pc.in libpropcalc.pc @ONLY)

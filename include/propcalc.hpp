@@ -1,7 +1,7 @@
 /*
  * propcalc.hpp - Propositional calculus package
  *
- * Copyright (C) 2019 Tobias Boege
+ * Copyright (C) 2019-2020 Tobias Boege
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the Artistic License 2.0
@@ -20,5 +20,6 @@
 #include <propcalc/variable.hpp>
 #include <propcalc/assignment.hpp>
 #include <propcalc/formula.hpp>
+#include <propcalc/dimacs.hpp>
 
 #endif /* PROPCALC_HPP */
