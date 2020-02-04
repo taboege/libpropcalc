@@ -35,7 +35,7 @@ shared_ptr<Ast> Ast::Not::simplify(const Assignment& assign) const {
 	/* Reduce Not Const */
 	if (newrhs->type() == Ast::Type::Const) {
 		return make_shared<Ast::Const>(
-			! static_cast<Ast::Const*>(newrhs.get())->value
+			not static_cast<Ast::Const*>(newrhs.get())->value
 		);
 	}
 	return make_shared<Ast::Not>(newrhs);
