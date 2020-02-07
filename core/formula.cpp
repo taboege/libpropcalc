@@ -229,7 +229,7 @@ shared_ptr<Ast> parse(const char* s, shared_ptr<Domain> domain) {
 			/* All operators are right-associative */
 			while (!ops.empty()) {
 				token op = ops.top();
-				if (is_opening_paren(op) || OPS[op.op].prec < OPS[tok.op].prec)
+				if (is_opening_paren(op) || OPS[op.op].prec <= OPS[tok.op].prec)
 					break;
 				ops.pop();
 				reduce(op, astdq);
