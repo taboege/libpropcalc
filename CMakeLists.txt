@@ -1,4 +1,7 @@
 cmake_minimum_required(VERSION 3.9)
+
+##### libpropcalc.so ###########################################################
+
 project(propcalc
 	VERSION 0.0.1
 	DESCRIPTION "All-in-one, FFIable propositional calculus package"
@@ -41,6 +44,61 @@ set_target_properties(propcalc PROPERTIES
 	PUBLIC_HEADER "${PROPCALC_HEADERS}"
 )
 
+install(TARGETS propcalc
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/propcalc/
+)
+
+install(FILES ${CMAKE_BINARY_DIR}/libpropcalc.pc
+	DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig
+)
+
+##### tests ####################################################################
+
+# We do not use enable_testing() and ctest. Our test driver is called prove.
+# This will also allow us to have `test` and `test-memcheck` targets, which
+# run the same tests, except the latter does it through valgrind memcheck.
+#
+# Since memcheck is slower and valgrind may not be available, we usually
+# want to run `test`, but sometimes also `test-memcheck`, but never both.
+# This is easier to accomplish without ctest it seems.
+
+file(GLOB files "t/*.t.cpp")
+foreach(file ${files})
+	get_filename_component(testname ${file} NAME_WLE)
+
+	add_executable(${testname} EXCLUDE_FROM_ALL ${file})
+	add_dependencies(${testname} propcalc)
+	# We may not use all functions imported from the tappp.hpp header
+	target_compile_options(${testname} PRIVATE -Wno-unused-function)
+	target_include_directories(${testname}
+		PRIVATE include t
+			$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+			$<INSTALL_INTERFACE:include>
+	)
+	target_link_libraries(${testname} PRIVATE propcalc)
+
+	list(APPEND testnames ${testname})
+	list(APPEND tests $<TARGET_FILE:${testname}>)
+endforeach()
+
+add_custom_target(test
+	COMMAND prove -e '' ${tests}
+	DEPENDS propcalc ${testnames}
+)
+
+##### valgrind tests ###########################################################
+
+find_program(VALGRIND NAMES valgrind)
+if(VALGRIND)
+	add_custom_target(test-memcheck
+		COMMAND prove -e '${VALGRIND} --quiet --error-exitcode=111 --exit-on-first-error=yes --leak-resolution=low --leak-check=full --errors-for-leak-kinds=all' ${tests}
+		DEPENDS propcalc ${testnames}
+	)
+endif()
+
+##### cpptest (soon to be removed) #############################################
+
 add_executable(cpptest cpptest.cpp)
 add_dependencies(cpptest propcalc)
 
@@ -51,12 +109,3 @@ target_include_directories(cpptest
 )
 
 target_link_libraries(cpptest PRIVATE propcalc)
-
-install(TARGETS propcalc
-	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-	PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/propcalc/
-)
-
-install(FILES ${CMAKE_BINARY_DIR}/libpropcalc.pc
-	DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig
-)
