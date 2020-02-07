@@ -17,7 +17,7 @@
 
 #include <queue>
 #include <memory>
-#include <iterator>
+#include <stdexcept>
 
 #include <propcalc/ast.hpp>
 #include <propcalc/variable.hpp>
@@ -26,6 +26,35 @@
 #include <propcalc/stream.hpp>
 
 namespace Propcalc {
+	namespace X::Formula {
+		/**
+		 * Various errors originating from the Formula parser.
+		 */
+		struct Parser : std::runtime_error {
+			unsigned int offset = 0;
+
+			Parser(const std::string& what, unsigned int offset)
+				: std::runtime_error(what), offset(offset)
+			{ }
+		};
+
+		/**
+		 * Logical connectives require their operand formulas to have
+		 * the same Domain. This exception is thrown if that precondition
+		 * is violated.
+		 */
+		struct Connective : std::invalid_argument {
+			Ast::Type op;
+			std::shared_ptr<Domain> lhs;
+			std::shared_ptr<Domain> rhs;
+
+			Connective(Ast::Type op, std::shared_ptr<Domain> lhs, std::shared_ptr<Domain> rhs)
+				: std::invalid_argument("Arguments to logical connective have different domains"),
+				  op(op), lhs(lhs), rhs(rhs)
+			{ }
+		 };
+	}
+
 	class Truthtable;
 	class Tseitin;
 	class CNF;
@@ -39,9 +68,9 @@ namespace Propcalc {
 		friend class CNF;
 
 	public:
-		/*
-		 * DefaultDomain is the default global domain for
-		 * Variables used by the Formula parser.
+		/**
+		 * DefaultDomain is the default global domain for variables used
+		 * by the Formula parser.
 		 */
 		static std::shared_ptr<Cache> DefaultDomain;
 

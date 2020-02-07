@@ -15,9 +15,21 @@
 #ifndef PROPCALC_STREAM_HPP
 #define PROPCALC_STREAM_HPP
 
+#include <stdexcept>
 #include <vector>
 
 namespace Propcalc {
+	namespace X::Stream {
+		/**
+		 * Stream iterators do not support being compared to each other
+		 * in general. The only valid comparison is iterator(Stream<T>*)
+		 * vs. iterator(nullptr).
+		 */
+		struct Comparison : std::logic_error {
+			Comparison(void) : std::logic_error("Invalid comparison of streams") { }
+		 };
+	}
+
 	template<typename T>
 	class Stream {
 	public:
@@ -51,7 +63,7 @@ namespace Propcalc {
 		bool operator!=(iterator& b) const {
 			if (!b.st)
 				return !!*st;
-			throw "comparing stream iterators";
+			throw X::Stream::Comparison();
 		}
 
 		T operator*(void) const {

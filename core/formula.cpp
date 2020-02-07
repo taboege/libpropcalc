@@ -41,8 +41,6 @@ enum optype {
 	OP_IMPL,     /* Implication    */
 	OP_EQV,      /* Equivalence    */
 	OP_XOR,      /* Contravalence  */
-	OP_OPAR,     /* Opening paren
-	                (internal use) */
 };
 
 struct opdesc {
@@ -62,7 +60,6 @@ static const struct opdesc OPS[] = {
 	[OP_IMPL]  = { .prec = Ast::Prec::Implish,  .arity = 2 },
 	[OP_EQV]   = { .prec = Ast::Prec::Eqvish,   .arity = 2 },
 	[OP_XOR]   = { .prec = Ast::Prec::Xorish,   .arity = 2 },
-	[OP_OPAR]  = { .prec = Ast::Prec::Loose,    .arity = 0 },
 };
 
 enum toktype {
@@ -75,6 +72,7 @@ enum toktype {
 
 struct token {
 	toktype type;
+	unsigned int offset;
 	union {
 		unsigned int val;
 		unsigned int var;
@@ -86,191 +84,197 @@ struct token {
 	};
 };
 
-static int next_token(const char*& s, token& tok) {
+static bool next_token(const char* s, unsigned int& i, token& tok) {
 	/* Skip whitespace */
-	while (isblank(*s))
-		s++;
+	while (isblank(s[i]))
+		i++;
+	tok.offset = i;
 
-	if (!*s) {
+	if (!s[i]) {
 		tok.type = TOK_EOF;
-		return 0;
+		return false;
 	}
 
-	if (!strncmp(s, "\\T", 2) || !strncmp(s, "\\F", 2)) {
+	if (!strncmp(&s[i], "\\T", 2) || !strncmp(&s[i], "\\F", 2)) {
 		tok.type = TOK_CONST;
-		tok.val = *++s == 'T';
-		s++;
-		return 1;
+		tok.val = s[++i] == 'T';
+		i++;
+		return true;
 	}
 
-	if (*s == '[') {
+	if (s[i] == '[') {
 		tok.type = TOK_VAR;
-		tok.sym.s = ++s;
+		tok.sym.s = &s[++i];
 		tok.sym.len = 0;
-		while (*s++ != ']') {
+		while (s[i++] != ']') {
 			tok.sym.len++;
 		}
-		return 1;
+		return true;
 	}
 
-	if (isalnum(*s)) {
+	if (isalnum(s[i])) {
 		tok.type = TOK_VAR;
-		tok.sym.s = s++;
+		tok.sym.s = &s[i++];
 		tok.sym.len = 1;
-		while (isalnum(*s) || *s == '_') {
-			s++;
+		while (isalnum(s[i]) || s[i] == '_') {
+			i++;
 			tok.sym.len++;
 		}
-		return 1;
+		return true;
 	}
 
-	if (*s == '(' || *s == ')') {
+	if (s[i] == '(' || s[i] == ')') {
 		tok.type = TOK_PAREN;
-		tok.val = *s == '(';
-		s++;
-		return 1;
+		tok.val = s[i++] == '(';
+		return true;
 	}
 
 	tok.type = TOK_OP;
 
-	if (*s == '~') {
+	if (s[i] == '~') {
 		tok.op = OP_NOT;
-		s++;
+		i++;
 	}
-	else if (*s == '&') {
+	else if (s[i] == '&') {
 		tok.op = OP_AND;
-		s++;
+		i++;
 	}
-	else if (*s == '|') {
+	else if (s[i] == '|') {
 		tok.op = OP_OR;
-		s++;
+		i++;
 	}
-	else if (*s == '^') {
+	else if (s[i] == '^') {
 		tok.op = OP_XOR;
-		s++;
+		i++;
 	}
-	else if (*s == '>' || !strncmp(s, "->", 2)) {
+	else if (s[i] == '>' || !strncmp(&s[i], "->", 2)) {
 		tok.op = OP_IMPL;
-		s += *s == '>' ? 1 : 2;
+		i += s[i] == '>' ? 1 : 2;
 	}
-	else if (*s == '=' || !strncmp(s, "<->", 3)) {
+	else if (s[i] == '=' || !strncmp(&s[i], "<->", 3)) {
 		tok.op = OP_EQV;
-		s += *s == '=' ? 1 : 3;
+		i += s[i] == '=' ? 1 : 3;
 	}
 	else {
-		throw "unrecognized token";
+		throw X::Formula::Parser("Unrecognized token", tok.offset);
 	}
 
-	return 1;
+	return true;
 }
 
-static void reduce(optype op, deque<shared_ptr<Ast>>& astdq) {
+static bool is_opening_paren(const token& tok) {
+	return tok.type == TOK_PAREN && !!tok.val;
+}
+
+static void reduce(token tok, deque<pair<shared_ptr<Ast>, token>>& astdq) {
 	shared_ptr<Ast> lhs, rhs;
 
-	if (op == OP_OPAR)
+	if (is_opening_paren(tok))
 		return;
 
-	if (astdq.size() < OPS[op].arity)
-		throw "missing operands";
-	rhs = astdq.back();
+	if (astdq.size() < OPS[tok.op].arity)
+		throw X::Formula::Parser("Missing operands", tok.offset);
+	rhs = astdq.back().first;
 	astdq.pop_back();
-	if (OPS[op].arity > 1) {
-		lhs = astdq.back();
+	if (OPS[tok.op].arity > 1) {
+		lhs = astdq.back().first;
 		astdq.pop_back();
 	}
 
-	switch (op) {
+	switch (tok.op) {
 	case OP_NOT:
-		astdq.push_back(make_shared<Ast::Not>(rhs));
+		astdq.push_back({ make_shared<Ast::Not>(rhs), tok });
 		break;
 	case OP_AND:
-		astdq.push_back(make_shared<Ast::And>(lhs, rhs));
+		astdq.push_back({ make_shared<Ast::And>(lhs, rhs), tok });
 		break;
 	case OP_OR:
-		astdq.push_back(make_shared<Ast::Or>(lhs, rhs));
+		astdq.push_back({ make_shared<Ast::Or>(lhs, rhs), tok });
 		break;
 	case OP_IMPL:
-		astdq.push_back(make_shared<Ast::Impl>(lhs, rhs));
+		astdq.push_back({ make_shared<Ast::Impl>(lhs, rhs), tok });
 		break;
 	case OP_EQV:
-		astdq.push_back(make_shared<Ast::Eqv>(lhs, rhs));
+		astdq.push_back({ make_shared<Ast::Eqv>(lhs, rhs), tok });
 		break;
 	case OP_XOR:
-		astdq.push_back(make_shared<Ast::Xor>(lhs, rhs));
+		astdq.push_back({ make_shared<Ast::Xor>(lhs, rhs), tok });
 		break;
 	default:
-		throw "unknown operator encountered";
+		throw X::Formula::Parser("Unrecognized operator", tok.offset);
 	}
 }
 
 shared_ptr<Ast> parse(const char* s, shared_ptr<Domain> domain) {
-	deque<shared_ptr<Ast>> astdq;
-	stack<optype> ops;
+	deque<pair<shared_ptr<Ast>, token>> astdq;
+	stack<token> ops;
 
 	token tok;
-	while (next_token(s, tok)) {
+	unsigned int i = 0;
+	while (next_token(s, i, tok)) {
 		shared_ptr<Ast> ast;
 
 		switch (tok.type) {
 		case TOK_CONST:
-			astdq.push_back(make_shared<Ast::Const>(tok.val));
+			astdq.push_back({ make_shared<Ast::Const>(tok.val), tok });
 			break;
 
 		case TOK_VAR:
-			astdq.push_back(make_shared<Ast::Var>(
+			astdq.push_back({ make_shared<Ast::Var>(
 				domain->resolve(string(tok.sym.s, tok.sym.len))
-			));
+			), tok });
 			break;
 
 		case TOK_OP:
 			/* All operators are right-associative */
-			while (!ops.empty() && OPS[ops.top()].prec > OPS[tok.op].prec) {
-				optype op = ops.top();
+			while (!ops.empty()) {
+				token op = ops.top();
+				if (is_opening_paren(op) || OPS[op.op].prec < OPS[tok.op].prec)
+					break;
 				ops.pop();
 				reduce(op, astdq);
 			}
-			ops.push(tok.op);
+			ops.push(tok);
 			break;
 
 		case TOK_PAREN:
-			/* opening */
-			if (tok.val) {
-				ops.push(OP_OPAR);
+			if (is_opening_paren(tok)) {
+				ops.push(tok);
 			}
-			/* closing */
 			else {
-				optype op;
+				token op;
 				do {
 					if (ops.empty())
-						throw "missing opening parenthesis";
+						throw X::Formula::Parser("Missing opening parenthesis", tok.offset);
 					op = ops.top();
 					ops.pop();
 					reduce(op, astdq);
 				}
-				while (op != OP_OPAR);
+				while (!is_opening_paren(op));
 			}
 			break;
 
 		default:
-			throw "invalid token encountered";
+			throw X::Formula::Parser("Invalid token", tok.offset);
 		}
 	}
 
 	while (!ops.empty()) {
-		optype op = ops.top();
+		token op = ops.top();
 		ops.pop();
-		if (op == OP_OPAR)
-			throw "missing closing parenthesis";
+		if (is_opening_paren(op))
+			throw X::Formula::Parser("Missing closing parenthesis", op.offset);
 		reduce(op, astdq);
 	}
 
 	switch (astdq.size()) {
 	case 0:
-		throw "empty formula";
+		throw X::Formula::Parser("Empty formula", i);
 	case 1:
-		return astdq.front();
+		return astdq.front().first;
 	default:
-		throw "excess operands";
+		token xs = astdq.front().second;
+		throw X::Formula::Parser("Excess operands after reduction", xs.offset);
 	}
 }
 
@@ -347,31 +351,31 @@ Formula Formula::operator~(void) {
 
 Formula Formula::operator&(const Formula& rhs) {
 	if (domain.get() != rhs.domain.get())
-		throw "domains must be equal";
+		throw X::Formula::Connective(Ast::Type::And, domain, rhs.domain);
 	return Formula(make_shared<Ast::And>(root, rhs.root), domain);
 }
 
 Formula Formula::operator|(const Formula& rhs) {
 	if (domain.get() != rhs.domain.get())
-		throw "domains must be equal";
+		throw X::Formula::Connective(Ast::Type::Or, domain, rhs.domain);
 	return Formula(make_shared<Ast::Or>(root, rhs.root), domain);
 }
 
 Formula Formula::operator>>(const Formula& rhs) {
 	if (domain.get() != rhs.domain.get())
-		throw "domains must be equal";
+		throw X::Formula::Connective(Ast::Type::Impl, domain, rhs.domain);
 	return Formula(make_shared<Ast::Impl>(root, rhs.root), domain);
 }
 
 Formula Formula::operator==(const Formula& rhs) {
 	if (domain.get() != rhs.domain.get())
-		throw "domains must be equal";
+		throw X::Formula::Connective(Ast::Type::Eqv, domain, rhs.domain);
 	return Formula(make_shared<Ast::Eqv>(root, rhs.root), domain);
 }
 
 Formula Formula::operator^(const Formula& rhs) {
 	if (domain.get() != rhs.domain.get())
-		throw "domains must be equal";
+		throw X::Formula::Connective(Ast::Type::Xor, domain, rhs.domain);
 	return Formula(make_shared<Ast::Xor>(root, rhs.root), domain);
 }
 
