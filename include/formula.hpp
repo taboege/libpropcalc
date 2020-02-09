@@ -75,7 +75,7 @@ namespace Propcalc {
 		static std::shared_ptr<Cache> DefaultDomain;
 
 		/* Parse a formula */
-		Formula(std::string fm, std::shared_ptr<Domain> domain = DefaultDomain);
+		Formula(const std::string& fm, std::shared_ptr<Domain> domain = DefaultDomain);
 
 		/* Wrap existing AST in a formula */
 		Formula(std::shared_ptr<Ast> root, std::shared_ptr<Domain> domain = DefaultDomain) :

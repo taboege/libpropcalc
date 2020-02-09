@@ -278,7 +278,7 @@ shared_ptr<Ast> parse(const char* s, shared_ptr<Domain> domain) {
 	}
 }
 
-Formula::Formula(string fm, shared_ptr<Domain> domain) :
+Formula::Formula(const string& fm, shared_ptr<Domain> domain) :
 	domain(domain),
 	root(parse(fm.c_str(), domain))
 { }
