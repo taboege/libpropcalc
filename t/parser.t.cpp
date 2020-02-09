@@ -15,12 +15,33 @@ static void is_postfix(const std::string& fm, const std::string& postfix, const 
 	is(parse_to_postfix(fm), postfix, message);
 }
 
-static void throws_parser(const std::string& fm, const std::string& what) {
-	bool is_ok = throws_like<Propcalc::X::Formula::Parser>([&] {
-		(void) parse_to_postfix(fm);
-	}, what, what + " " + fm);
-	if (!is_ok)
-		diag(parse_to_postfix(fm));
+static void throws_parser(const std::string& fm, const std::string& what, unsigned int where = 0) {
+	std::string message = what + " ";
+	if (where > 0)
+		message += "at pos. " + std::to_string(where) + ": ";
+	message += fm;
+
+	SUBTEST(message) {
+		std::string postfix = "";
+		try {
+			postfix = parse_to_postfix(fm);
+			fail("code succeeded");
+			diag("Postfix: " + postfix);
+		}
+		catch (const Propcalc::X::Formula::Parser& e) {
+			bool is_ok = like(e.what(), what, "reason matches");
+			if (where > 0)
+				is_ok &= is_ok && is(1 + e.offset, where, "position matches");
+			if (!is_ok) {
+				diag("Input: " + fm);
+				diag("     " + std::string(e.offset, ' ') + "--^");
+			}
+		}
+		catch (...) {
+			fail("different exception occurred");
+		}
+		done_testing();
+	}
 }
 
 static void lives_parser(const std::string& fm, const std::string& message) {
@@ -39,29 +60,36 @@ int main(void) {
 		is_postfix("~(a&b)", "[a] [b] & ~");
 	}
 
-	SUBTEST(20, "exceptions") {
+	SUBTEST(26, "exceptions") {
 		throws_parser("  ", "Empty formula");
-		throws_parser("~a + b", "Unrecognized token");
-		throws_parser("a?", "Unrecognized token");
-		throws_parser("?a", "Unrecognized token");
-		throws_parser("~~a&", "Missing operands");
-		throws_parser("~", "Missing operands");
-		throws_parser("&", "Missing operands");
-		throws_parser("a&b&c&", "Missing operands");
-		TODO("unary ~ attaches as postfix operator if needed?");
-		throws_parser("a&b&c&d~", "Missing operands");
-		throws_parser("a&b&c&d&~", "Missing operands");
-		throws_parser("~a&()", "Missing operands");
-		throws_parser("()", "Empty formula");
-		throws_parser(")", "Missing opening paren.*");
-		throws_parser("~a&x)", "Missing opening paren.*");
-		throws_parser("(~a)&x)", "Missing opening paren.*");
-		throws_parser("~a&x3 a", "Excess operands.*");
+		throws_parser("~a + b", "Unrecognized token", 4);
+		throws_parser("a?", "Unrecognized token", 2);
+		throws_parser("?a", "Unrecognized token", 1);
+		throws_parser("~", "Missing operands", 1);
+		throws_parser("a~", "Infix expected.*", 2);
+		throws_parser("a&", "Missing operands", 2);
+		TODO("error position debatable");
+		throws_parser("a&~", "Missing operands", 3);
+		throws_parser("a&b~", "Infix expected.*", 4);
+		throws_parser("a&b~c", "Infix expected.*", 4);
+		throws_parser("a b &", "Infix expected.*", 3);
+		throws_parser("&", "Term expected.*", 1);
+		TODO("error position bugged");
+		throws_parser("a&b&c&", "Missing operands", 6);
+		throws_parser("a&b&c&d~", "Infix expected.*", 8);
+		TODO("error position bugged");
+		throws_parser("a&b&c&d&~", "Missing operands", 8);
+		throws_parser("~a&()", "Missing operands", 3);
+		throws_parser("()", "Empty formula", 3);
+		throws_parser(")", "Missing opening paren.*", 1);
+		throws_parser("~a&x)", "Missing opening paren.*", 5);
+		throws_parser("(~a)&x)", "Missing opening paren.*", 7);
+		throws_parser("~a&x3 a", "Infix expected.*", 7);
 		lives_parser( "~a&x3a", "long variable token");
-		throws_parser("(~a&x)(3)(a)", "Excess operands.*");
-		throws_parser("(~a&x)(3&a)", "Excess operands.*");
-		TODO("parentheses do not enclose a term");
-		throws_parser("a (= b)", "");
+		throws_parser("(~a&x)(3)(a)", "Infix expected.*", 7);
+		throws_parser("(~a&x)(3&a)", "Infix expected.*", 7);
+		throws_parser("a (= b)", "Infix expected.*", 3);
+		throws_parser("a (=) b", "Infix expected.*", 3);
 	}
 
 	SUBTEST(13, "associativity & precedence") {

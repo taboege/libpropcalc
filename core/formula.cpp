@@ -84,6 +84,11 @@ struct token {
 	};
 };
 
+enum expect {
+	EXPECT_TERM,
+	EXPECT_INFIX,
+};
+
 static bool next_token(const char* s, unsigned int& i, token& tok) {
 	/* Skip whitespace */
 	while (isblank(s[i]))
@@ -166,6 +171,14 @@ static bool is_opening_paren(const token& tok) {
 	return tok.type == TOK_PAREN && !!tok.val;
 }
 
+static bool is_unary(const token& tok) {
+	return tok.type == TOK_OP && OPS[tok.op].arity == 1;
+}
+
+static bool is_binary(const token& tok) {
+	return tok.type == TOK_OP && OPS[tok.op].arity == 2;
+}
+
 static void reduce(token tok, deque<pair<shared_ptr<Ast>, token>>& astdq) {
 	shared_ptr<Ast> lhs, rhs;
 
@@ -208,24 +221,57 @@ static void reduce(token tok, deque<pair<shared_ptr<Ast>, token>>& astdq) {
 shared_ptr<Ast> parse(const char* s, shared_ptr<Domain> domain) {
 	deque<pair<shared_ptr<Ast>, token>> astdq;
 	stack<token> ops;
-
+	expect next = EXPECT_TERM;
 	token tok;
+
+	auto check_expect = [&] (const expect got) -> bool {
+		if (next == got)
+			return true;
+
+		switch (got) {
+		case EXPECT_TERM:
+			throw X::Formula::Parser("Infix expected but got term", tok.offset);
+			break;
+
+		case EXPECT_INFIX:
+			throw X::Formula::Parser("Term expected but got infix", tok.offset);
+			break;
+		}
+		return false;
+	};
+
+	auto toggle_expect = [&] {
+		switch (next) {
+		case EXPECT_TERM:
+			next = EXPECT_INFIX;
+			break;
+		case EXPECT_INFIX:
+			next = EXPECT_TERM;
+			break;
+		}
+	};
+
 	unsigned int i = 0;
 	while (next_token(s, i, tok)) {
 		shared_ptr<Ast> ast;
 
 		switch (tok.type) {
 		case TOK_CONST:
+			check_expect(EXPECT_TERM);
 			astdq.push_back({ make_shared<Ast::Const>(tok.val), tok });
+			toggle_expect();
 			break;
 
 		case TOK_VAR:
+			check_expect(EXPECT_TERM);
 			astdq.push_back({ make_shared<Ast::Var>(
 				domain->resolve(string(tok.sym.s, tok.sym.len))
 			), tok });
+			toggle_expect();
 			break;
 
 		case TOK_OP:
+			check_expect(is_unary(tok) ? EXPECT_TERM : EXPECT_INFIX);
 			/* All operators are right-associative */
 			while (!ops.empty()) {
 				token op = ops.top();
@@ -235,10 +281,13 @@ shared_ptr<Ast> parse(const char* s, shared_ptr<Domain> domain) {
 				reduce(op, astdq);
 			}
 			ops.push(tok);
+			if (is_binary(tok))
+				toggle_expect();
 			break;
 
 		case TOK_PAREN:
 			if (is_opening_paren(tok)) {
+				check_expect(EXPECT_TERM);
 				ops.push(tok);
 			}
 			else {
