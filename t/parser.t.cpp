@@ -60,28 +60,27 @@ int main(void) {
 		is_postfix("~(a&b)", "[a] [b] & ~");
 	}
 
-	SUBTEST(26, "exceptions") {
-		throws_parser("  ", "Empty formula");
+	SUBTEST(28, "exceptions") {
+		throws_parser("  ", "Term expected.*");
 		throws_parser("~a + b", "Unrecognized token", 4);
 		throws_parser("a?", "Unrecognized token", 2);
 		throws_parser("?a", "Unrecognized token", 1);
-		throws_parser("~", "Missing operands", 1);
+		throws_parser("~", "Term expected.*", 2);
 		throws_parser("a~", "Infix expected.*", 2);
-		throws_parser("a&", "Missing operands", 2);
-		TODO("error position debatable");
-		throws_parser("a&~", "Missing operands", 3);
+		throws_parser("a&", "Term expected.*", 3);
+		throws_parser("a&~", "Term expected.*", 4);
 		throws_parser("a&b~", "Infix expected.*", 4);
 		throws_parser("a&b~c", "Infix expected.*", 4);
 		throws_parser("a b &", "Infix expected.*", 3);
 		throws_parser("&", "Term expected.*", 1);
-		TODO("error position bugged");
-		throws_parser("a&b&c&", "Missing operands", 6);
+		throws_parser("a&b&c&", "Term expected.*", 7);
 		throws_parser("a&b&c&d~", "Infix expected.*", 8);
-		TODO("error position bugged");
-		throws_parser("a&b&c&d&~", "Missing operands", 8);
-		throws_parser("~a&()", "Missing operands", 3);
-		throws_parser("()", "Empty formula", 3);
-		throws_parser(")", "Missing opening paren.*", 1);
+		throws_parser("a&b&c&d&~", "Term expected.*", 10);
+		throws_parser("~a&()", "Term expected.*", 5);
+		throws_parser("~a&()b", "Term expected.*", 5);
+		throws_parser("()", "Term expected.*", 2);
+		throws_parser("a)", "Missing opening paren.*", 2);
+		throws_parser(")", "Term expected.*", 1);
 		throws_parser("~a&x)", "Missing opening paren.*", 5);
 		throws_parser("(~a)&x)", "Missing opening paren.*", 7);
 		throws_parser("~a&x3 a", "Infix expected.*", 7);

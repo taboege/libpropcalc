@@ -291,6 +291,11 @@ shared_ptr<Ast> parse(const char* s, shared_ptr<Domain> domain) {
 				ops.push(tok);
 			}
 			else {
+				/* A closing paren terminates a term, always, so we better
+				 * not still be expecting one. */
+				if (next == EXPECT_TERM)
+					throw X::Formula::Parser("Term expected when encountering closing parenthesis", tok.offset);
+
 				token op;
 				do {
 					if (ops.empty())
@@ -308,6 +313,13 @@ shared_ptr<Ast> parse(const char* s, shared_ptr<Domain> domain) {
 		}
 	}
 
+	/* The parser cannot stop expecting a term. This ensures that the
+	 * formula is non-empty and it ensures that each infix has a RHS
+	 * operand, so that they don't steal other operators' operands in
+	 * the reduce loop and mess up error reporting. */
+	if (next == EXPECT_TERM)
+		throw X::Formula::Parser("Term expected but EOF reached", i);
+
 	while (!ops.empty()) {
 		token op = ops.top();
 		ops.pop();
@@ -318,7 +330,7 @@ shared_ptr<Ast> parse(const char* s, shared_ptr<Domain> domain) {
 
 	switch (astdq.size()) {
 	case 0:
-		throw X::Formula::Parser("Empty formula", i);
+		throw X::Formula::Parser("No operands left after reduction", i);
 	case 1:
 		return astdq.front().first;
 	default:
