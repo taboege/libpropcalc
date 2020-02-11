@@ -48,8 +48,13 @@ static void lives_parser(const std::string& fm, const std::string& message) {
 	lives([&] { (void) parse_to_postfix(fm); }, message);
 }
 
+static void infix_roundtrips(const std::string& fm) {
+	std::string infix = Propcalc::Formula(fm).to_infix();
+	is(infix, Propcalc::Formula(infix).to_infix(), fm);
+}
+
 int main(void) {
-	plan(4);
+	plan(5);
 
 	SUBTEST(6, "basics") {
 		is_postfix("~a", "[a] ~");
@@ -109,15 +114,28 @@ int main(void) {
 		is_postfix("a ^ b > c ^ a", "[a] [b] [c] > [a] ^ ^");
 	}
 
-	std::string fmstr = "(ab&3 | x&a34) -> (\\T ^ x) -> (y = x) <-> (ab | cd ^ a34)";
-	SUBTEST(5, "properties of " + fmstr) {
-		Propcalc::Formula fm(fmstr);
-		is(fm.to_postfix(), "[ab] [3] & [x] [a34] & | \\T [x] ^ [y] [x] = > > [ab] [cd] | [a34] ^ =", "postfix");
-		is(fm.to_prefix(),  "= > | & [ab] [3] & [x] [a34] > ^ \\T [x] = [y] [x] ^ | [ab] [cd] [a34]", "prefix");
-		is(fm.to_infix(),   "[ab] & [3] | [x] & [a34] > (\\T ^ [x]) > ([y] = [x]) = [ab] | [cd] ^ [a34]", "infix");
+	SUBTEST(10, "infix stringification roundtrips") {
+		infix_roundtrips("~a & b");
+		infix_roundtrips("~(a & b)");
+		infix_roundtrips("(a & b) -> c = d");
+		infix_roundtrips("(a & b) -> (c = d)");
+		infix_roundtrips("((a & b) -> c) = d");
+		infix_roundtrips("a = b ^ c = d");
+		infix_roundtrips("a ^ b = c ^ d");
+		infix_roundtrips("a = b > c = d");
+		infix_roundtrips("a > b = c > d");
+		infix_roundtrips("(ab&3 | x&a34) -> (\\T ^ x) -> (y = x) <-> (ab | cd ^ a34)");
+	}
 
-		is(fm.get_domain(), Propcalc::Formula::DefaultDomain, "parser defaults to DefaultDomain");
-		is(fm.vars().size(), 6, "correct variable count");
+	std::string fm = "(ab&3 | x&a34) -> (\\T ^ x) -> (y = x) <-> (ab | cd ^ a34)";
+	SUBTEST(5, "properties of " + fm) {
+		Propcalc::Formula F(fm);
+		is(F.to_postfix(), "[ab] [3] & [x] [a34] & | \\T [x] ^ [y] [x] = > > [ab] [cd] | [a34] ^ =", "postfix");
+		is(F.to_prefix(),  "= > | & [ab] [3] & [x] [a34] > ^ \\T [x] = [y] [x] ^ | [ab] [cd] [a34]", "prefix");
+		is(F.to_infix(),   "[ab] & [3] | [x] & [a34] > (\\T ^ [x]) > ([y] = [x]) = [ab] | [cd] ^ [a34]", "infix");
+
+		is(F.get_domain(), Propcalc::Formula::DefaultDomain, "parser defaults to DefaultDomain");
+		is(F.vars().size(), 6, "correct variable count");
 	}
 
 	return EXIT_SUCCESS;
