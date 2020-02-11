@@ -32,26 +32,40 @@ namespace Propcalc {
 /* Initialize the Formula ctor's default Domain. */
 shared_ptr<Cache> Formula::DefaultDomain = make_shared<Cache>();
 
+/**
+ * Types of operator nodes. These values are only used in the short
+ * period between parsing an operator token and creating its AST node.
+ * AST nodes have a 1-to-1-corresponding `enum Ast::Type` which is
+ * part of the public interface.
+ */
 enum optype {
-	OP_CONST,    /* Constant       */
-	OP_VAR,      /* Symbol         */
-	OP_NOT,      /* Negation       */
-	OP_AND,      /* Conjunction    */
-	OP_OR,       /* Disjunction    */
-	OP_IMPL,     /* Implication    */
-	OP_EQV,      /* Equivalence    */
-	OP_XOR,      /* Contravalence  */
+	OP_CONST,    /**< Constant       */
+	OP_VAR,      /**< Symbol         */
+	OP_NOT,      /**< Negation       */
+	OP_AND,      /**< Conjunction    */
+	OP_OR,       /**< Disjunction    */
+	OP_IMPL,     /**< Implication    */
+	OP_EQV,      /**< Equivalence    */
+	OP_XOR,      /**< Contravalence  */
 };
 
+/**
+ * Description structure of an operator. It includes precedence
+ * and arity. It does not include associativity because all logical
+ * connectives can be assumed to associate to the right. All but
+ * OP_IMPL are associative and OP_IMPL is right-associative by
+ * convention.
+ */
 struct opdesc {
-	Ast::Prec prec;
-	size_t arity;
+	Ast::Prec prec; /**< Precedence */
+	size_t arity;   /**< Arity      */
 };
 
+/**
+ * Operator table. This data structure is consulted by the parser
+ * to convert infix to AST representation.
+ */
 static const struct opdesc OPS[] = {
-	/* XXX: No associativity information because this parser has
-	 * very limited scope and everything can be supposed to be
-	 * right-associative. */
 	[OP_CONST] = { .prec = Ast::Prec::Symbolic, .arity = 0 },
 	[OP_VAR]   = { .prec = Ast::Prec::Symbolic, .arity = 0 },
 	[OP_NOT]   = { .prec = Ast::Prec::Notish,   .arity = 1 },
@@ -62,14 +76,21 @@ static const struct opdesc OPS[] = {
 	[OP_XOR]   = { .prec = Ast::Prec::Xorish,   .arity = 2 },
 };
 
+/**
+ * Token type as returned by `next_token`.
+ */
 enum toktype {
-	TOK_EOF = 0, /* End of file    */
-	TOK_CONST,   /* Constant       */
-	TOK_VAR,     /* A [...] symbol */
-	TOK_OP,      /* An operator    */
-	TOK_PAREN,   /* Parenthesis    */
+	TOK_EOF = 0, /**< End of file    */
+	TOK_CONST,   /**< Constant       */
+	TOK_VAR,     /**< A [...] symbol */
+	TOK_OP,      /**< An operator    */
+	TOK_PAREN,   /**< Parenthesis    */
 };
 
+/**
+ * Description of a parsed token, including token type, the starting
+ * offset in the formula and type-specific data.
+ */
 struct token {
 	toktype type;
 	unsigned int offset;
@@ -84,11 +105,23 @@ struct token {
 	};
 };
 
+/**
+ * The parser always expects a term or an infix. The current state
+ * is described by a variable of this type.
+ */
 enum expect {
 	EXPECT_TERM,
 	EXPECT_INFIX,
 };
 
+/**
+ * Scan for the next token starting at `s[i]` which is returned in the
+ * `tok` reference. The unsigned int reference `i` is updated to point
+ * just after the last character of the read token (unless it was EOF).
+ *
+ * Whitespace is skipped. Unrecognized characters throw an exception
+ * of type Propcalc::X::Formula::Parser.
+ */
 static bool next_token(const char* s, unsigned int& i, token& tok) {
 	/* Skip whitespace */
 	while (isblank(s[i]))
@@ -179,6 +212,12 @@ static bool is_binary(const token& tok) {
 	return tok.type == TOK_OP && OPS[tok.op].arity == 2;
 }
 
+/**
+ * Reduction step in the parser. Take an operator (token) `tok` and make
+ * a new AST node from it with operands at the top of `astdq` and then
+ * push the AST node to that deque. Throws a Propcalc::X::Formula::Parser
+ * exception if not enough operands are available.
+ */
 static void reduce(token tok, deque<pair<shared_ptr<Ast>, token>>& astdq) {
 	shared_ptr<Ast> lhs, rhs;
 
@@ -218,6 +257,10 @@ static void reduce(token tok, deque<pair<shared_ptr<Ast>, token>>& astdq) {
 	}
 }
 
+/**
+ * Parse a given formula string into a root AST node for a Formula object,
+ * resolving variables with the given `domain`.
+ */
 shared_ptr<Ast> parse(const char* s, shared_ptr<Domain> domain) {
 	deque<pair<shared_ptr<Ast>, token>> astdq;
 	stack<token> ops;
@@ -344,6 +387,12 @@ Formula::Formula(const string& fm, shared_ptr<Domain> domain) :
 	root(parse(fm.c_str(), domain))
 { }
 
+/**
+ * Convert a Clause into a Formula. Returns a Formula which is a disjunction
+ * of positive or negative variables. If the clause is empty, the formula
+ * consists of a single Ast::Const node, which is false (false being the
+ * identity element with respect to disjunction).
+ */
 static shared_ptr<Ast> clause_ast(Clause& cl) {
 	vector<shared_ptr<Ast>> lits;
 	for (auto& v : cl.vars()) {
