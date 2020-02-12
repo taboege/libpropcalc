@@ -2,9 +2,10 @@
 #include <propcalc/propcalc.hpp>
 
 using namespace TAP;
+using namespace Propcalc;
 
 static std::string parse_to_postfix(const std::string& fm) {
-	return Propcalc::Formula(fm).to_postfix();
+	return Formula(fm).to_postfix();
 }
 
 static void is_postfix(const std::string& fm, const std::string& postfix) {
@@ -44,17 +45,19 @@ static void throws_parser(const std::string& fm, const std::string& what, unsign
 	}
 }
 
-static void lives_parser(const std::string& fm, const std::string& message) {
-	lives([&] { (void) parse_to_postfix(fm); }, message);
+static Formula lives_parser(const std::string& fm, const std::string& message, std::shared_ptr<Domain> domain = Formula::DefaultDomain) {
+	Formula F("[Sentinel formula]"); // formula may not be empty...
+	lives([&] { F = Formula(fm, domain); }, message.empty() ? fm : message);
+	return F;
 }
 
 static void infix_roundtrips(const std::string& fm) {
-	std::string infix = Propcalc::Formula(fm).to_infix();
-	is(infix, Propcalc::Formula(infix).to_infix(), fm);
+	std::string infix = Formula(fm).to_infix();
+	is(infix, Formula(infix).to_infix(), fm);
 }
 
 int main(void) {
-	plan(5);
+	plan(6);
 
 	SUBTEST(6, "basics") {
 		is_postfix("~a", "[a] ~");
@@ -63,6 +66,18 @@ int main(void) {
 		is_postfix("  ~~  ~a", "[a] ~ ~ ~", "whitespace is insignificant");
 		is_postfix("~a&b", "[a] ~ [b] &");
 		is_postfix("~(a&b)", "[a] [b] & ~");
+	}
+
+	SUBTEST(8, "variable names and identities") {
+		auto temp = std::make_shared<Cache>();
+		Formula F = lives_parser("3 | 3_4 & ~xyz -> a25 = [_]", "", temp);
+		Formula G = lives_parser("[12|47] & ([xyz] ^ [Once upon a Time...])", "", temp);
+		is(F.vars().size(), 5, "F has 5 variables");
+		is(G.vars().size(), 3, "G has 3 variables");
+		is((F & G).vars().size(), 7, "F & G has only 7 variables");
+		throws_parser("a34 & _", "Unrecognized token", 7);
+		throws_parser("x | ~Once upon a Time...", "Infix expected.*", 11);
+		lives_parser("x | ~Once", "word as a variable");
 	}
 
 	SUBTEST(28, "exceptions") {
@@ -129,12 +144,12 @@ int main(void) {
 
 	std::string fm = "(ab&3 | x&a34) -> (\\T ^ x) -> (y = x) <-> (ab | cd ^ a34)";
 	SUBTEST(5, "properties of " + fm) {
-		Propcalc::Formula F(fm);
+		Formula F(fm);
 		is(F.to_postfix(), "[ab] [3] & [x] [a34] & | \\T [x] ^ [y] [x] = > > [ab] [cd] | [a34] ^ =", "postfix");
 		is(F.to_prefix(),  "= > | & [ab] [3] & [x] [a34] > ^ \\T [x] = [y] [x] ^ | [ab] [cd] [a34]", "prefix");
 		is(F.to_infix(),   "[ab] & [3] | [x] & [a34] > (\\T ^ [x]) > ([y] = [x]) = [ab] | [cd] ^ [a34]", "infix");
 
-		is(F.get_domain(), Propcalc::Formula::DefaultDomain, "parser defaults to DefaultDomain");
+		is(F.get_domain(), Formula::DefaultDomain, "parser defaults to DefaultDomain");
 		is(F.vars().size(), 6, "correct variable count");
 	}
 
