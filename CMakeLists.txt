@@ -21,6 +21,8 @@ add_library(propcalc SHARED
 	core/assignment.cpp
 	core/ast.cpp
 	core/formula.cpp
+	core/tseitin.cpp
+	core/cnf.cpp
 	core/dimacs.cpp
 )
 

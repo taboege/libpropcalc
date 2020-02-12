@@ -20,6 +20,11 @@
 #include <propcalc/assignment.hpp>
 
 namespace Propcalc {
+	/**
+	 * This stream takes a Formula and lazily runs through all of its
+	 * assignments in lexicographic order, producing an std::pair of
+	 * the assignment and the bool the Formula yields on it.
+	 */
 	class Truthtable : public Stream<std::pair<Assignment, bool>> {
 		Formula fm;
 		Assignment last;

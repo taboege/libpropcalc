@@ -25,6 +25,16 @@
 #include <propcalc/assignment.hpp>
 
 namespace Propcalc {
+	/**
+	 * This stream takes a Formula and lazily enumerates the clauses of
+	 * an equivalent formula in conjunctive normal form.
+	 *
+	 * It does this by first skipping all Ast::And nodes at the root
+	 * recursively collecting their non-And children. Concatenating the
+	 * CNFs of these children yields a CNF of the entire. Then the
+	 * truthtable of each child is enumerated: every non-satisfying
+	 * assignment becomes one clause forbidding that assignment.
+	 */
 	class CNF : public Stream<Clause> {
 		Formula fm;
 		std::queue<std::shared_ptr<Ast>> queue;
@@ -33,20 +43,7 @@ namespace Propcalc {
 		Clause cl;
 
 	public:
-		CNF(const Formula& fm) : fm(fm) {
-			/* Skip all And nodes at the root, recursively. These just
-			 * tell us to concatenate the clauses of the maximal subtrees
-			 * without and And at the root. This way, the truth tables
-			 * of subtrees are smaller. */
-			queue.push(fm.root);
-			while (queue.front()->type() == Ast::Type::And) {
-				Ast::And* v = static_cast<Ast::And*>(queue.front().get());
-				queue.pop();
-				queue.push(v->lhs);
-				queue.push(v->rhs);
-			}
-			++*this; /* forward to the first clause */
-		}
+		CNF(const Formula& fm);
 
 		operator bool(void) const {
 			return queue.size() > 0 || current != nullptr;
@@ -56,30 +53,7 @@ namespace Propcalc {
 			return cl;
 		}
 
-		CNF& operator++(void) {
-			while (true) {
-				if (!current) {
-					if (queue.size() == 0)
-						break; /* no more clauses */
-					current = queue.front();
-					queue.pop();
-					last = Assignment(Formula(current, fm.domain).vars());
-				}
-				else {
-					++last;
-					if (last.overflown()) {
-						current = nullptr;
-						continue;
-					}
-				}
-
-				if (!fm.eval(last)) {
-					cl = ~last;
-					break; /* found the next clause */
-				}
-			}
-			return *this;
-		}
+		CNF& operator++(void);
 	};
 }
 

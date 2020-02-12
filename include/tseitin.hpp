@@ -17,7 +17,6 @@
 
 #include <queue>
 #include <memory>
-#include <mutex>
 
 #include <propcalc/ast.hpp>
 #include <propcalc/stream.hpp>
@@ -26,12 +25,21 @@
 #include <propcalc/variable.hpp>
 
 namespace Propcalc {
-	// TODO: Turn this initializer list into a custom literal?
-	using ClauseData = std::initializer_list<std::pair<VarRef, bool>>;
-	static inline std::unique_ptr<Clause> make_clause(ClauseData&& cd) {
-		return std::make_unique<Clause>(std::forward<ClauseData>(cd));
-	}
-
+	/**
+	 * This stream takes a Formula and lazily enumerates the clauses of
+	 * its Tseitin transform, an equisatisfiable formula in CNF, whose
+	 * size is linear in and which mimics the evaluation of the original
+	 * formula.
+	 *
+	 * The Tseitin transform algorithm assigns a new variable to each
+	 * node in the AST of the formula. For this reason, the domain of
+	 * the Clause objects returned by this stream is different from the
+	 * original formula. It is an instance of Tseitin::Domain which
+	 * can be obtained from Tseitin::get_domain() and which allows to
+	 * look up Tseitin::Variable objects by their AST node in the
+	 * original formula. Conversel, the variable objects also store
+	 * an std::shared_ptr to the AST node.
+	 */
 	class Tseitin : public Stream<Clause> {
 		class Variable : public Propcalc::Variable {
 		public:
@@ -50,21 +58,7 @@ namespace Propcalc {
 			std::map<std::shared_ptr<Ast>, VarRef> astcache;
 
 		public:
-			VarRef get(std::shared_ptr<Ast> ast) {
-				const std::lock_guard<std::mutex> lock(access);
-
-				VarRef var;
-				auto it = astcache.find(ast);
-				if (it == astcache.end()) {
-					auto uvar = std::make_unique<Tseitin::Variable>(ast);
-					std::tie(std::ignore, var) = this->put_variable(std::move(uvar));
-					astcache.insert({ ast, var });
-				}
-				else {
-					var = it->second;
-				}
-				return var;
-			}
+			VarRef get(std::shared_ptr<Ast> ast);
 		};
 
 		Formula fm;
@@ -92,112 +86,7 @@ namespace Propcalc {
 			return *last;
 		}
 
-		Tseitin& operator++(void) {
-			while (true) {
-				if (clauses.size() > 0) {
-					last = std::move(clauses.front());
-					clauses.pop();
-					break; /* found the next clause */
-				}
-
-				if (queue.size() == 0)
-					break; /* exhausted */
-
-				auto ast = queue.front();
-				queue.pop();
-				switch (ast->type()) {
-					case Ast::Type::Const: {
-						auto C = static_cast<Ast::Const*>(ast.get());
-						auto c = vars->get(ast);
-						clauses.push(make_clause({ {c, C->value} }));
-						break;
-					}
-
-					case Ast::Type::Var: {
-						/* nothing to do */
-						break;
-					}
-
-					case Ast::Type::Not: {
-						auto C = static_cast<Ast::Not*>(ast.get());
-						auto c = vars->get(ast);
-						auto a = vars->get(C->rhs);
-						clauses.push(make_clause({ {a, false}, {c, false} }));
-						clauses.push(make_clause({ {a,  true}, {c,  true} }));
-						queue.push(C->rhs);
-						break;
-					}
-
-					case Ast::Type::And: {
-						auto C = static_cast<Ast::And*>(ast.get());
-						auto c = vars->get(ast);
-						auto a = vars->get(C->lhs);
-						auto b = vars->get(C->rhs);
-						clauses.push(make_clause({ {a, false}, {b, false}, {c,  true} }));
-						clauses.push(make_clause({ {a,  true},             {c, false} }));
-						clauses.push(make_clause({             {b,  true}, {c, false} }));
-						queue.push(C->lhs);
-						queue.push(C->rhs);
-						break;
-					}
-
-					case Ast::Type::Or: {
-						auto C = static_cast<Ast::Or*>(ast.get());
-						auto c = vars->get(ast);
-						auto a = vars->get(C->lhs);
-						auto b = vars->get(C->rhs);
-						clauses.push(make_clause({ {a,  true}, {b,  true}, {c, false} }));
-						clauses.push(make_clause({ {a, false},             {c,  true} }));
-						clauses.push(make_clause({             {b, false}, {c,  true} }));
-						queue.push(C->lhs);
-						queue.push(C->rhs);
-						break;
-					}
-
-					case Ast::Type::Impl: {
-						auto C = static_cast<Ast::Impl*>(ast.get());
-						auto c = vars->get(ast);
-						auto a = vars->get(C->lhs);
-						auto b = vars->get(C->rhs);
-						clauses.push(make_clause({ {a, false}, {b,  true}, {c, false} }));
-						clauses.push(make_clause({ {a,  true},             {c,  true} }));
-						clauses.push(make_clause({             {b, false}, {c,  true} }));
-						queue.push(C->lhs);
-						queue.push(C->rhs);
-						break;
-					}
-
-					case Ast::Type::Eqv: {
-						auto C = static_cast<Ast::Eqv*>(ast.get());
-						auto c = vars->get(ast);
-						auto a = vars->get(C->lhs);
-						auto b = vars->get(C->rhs);
-						clauses.push(make_clause({ {a, false}, {b, false}, {c,  true} }));
-						clauses.push(make_clause({ {a,  true}, {b,  true}, {c,  true} }));
-						clauses.push(make_clause({ {a,  true}, {b, false}, {c, false} }));
-						clauses.push(make_clause({ {a, false}, {b,  true}, {c, false} }));
-						queue.push(C->lhs);
-						queue.push(C->rhs);
-						break;
-					}
-
-					case Ast::Type::Xor: {
-						auto C = static_cast<Ast::Xor*>(ast.get());
-						auto c = vars->get(ast);
-						auto a = vars->get(C->lhs);
-						auto b = vars->get(C->rhs);
-						clauses.push(make_clause({ {a, false}, {b, false}, {c, false} }));
-						clauses.push(make_clause({ {a,  true}, {b,  true}, {c, false} }));
-						clauses.push(make_clause({ {a,  true}, {b, false}, {c,  true} }));
-						clauses.push(make_clause({ {a, false}, {b,  true}, {c,  true} }));
-						queue.push(C->lhs);
-						queue.push(C->rhs);
-						break;
-					}
-				}
-			}
-			return *this;
-		}
+		Tseitin& operator++(void);
 	};
 }
 
