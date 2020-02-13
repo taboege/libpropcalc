@@ -1,6 +1,8 @@
 #include <tappp/tappp.hpp>
 #include <propcalc/propcalc.hpp>
 
+#include <cstdlib>
+
 using namespace TAP;
 using namespace Propcalc;
 

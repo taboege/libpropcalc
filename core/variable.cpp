@@ -27,12 +27,16 @@ namespace Propcalc {
 
 /* Needs the lock to be held! */
 pair<VarNr, VarRef> Cache::new_variable(string name) {
+	if (frozen)
+		throw X::Cache::Frozen();
 	auto uvar = make_unique<Variable>(name);
-	return this->put_variable(move(uvar));
+	return put_variable(move(uvar));
 }
 
 /* Needs the lock to be held! */
 pair<VarNr, VarRef> Cache::put_variable(unique_ptr<Variable> uvar) {
+	if (frozen)
+		throw X::Cache::Frozen();
 	VarRef var = uvar.get();
 	cache.push_back(move(uvar));
 	by_name.insert({ var->name, var });
@@ -50,7 +54,7 @@ VarRef Cache::resolve(std::string name) {
 	VarRef var;
 	auto it = by_name.find(name);
 	if (it == by_name.end()) {
-		tie(ignore, var) = this->new_variable(name);
+		tie(ignore, var) = new_variable(name);
 	}
 	else {
 		var = it->second;
@@ -66,9 +70,12 @@ VarNr Cache::pack(VarRef var) {
 VarRef Cache::unpack(VarNr nr) {
 	const std::lock_guard<std::mutex> lock(access);
 
+	if (nr == 0)
+		throw X::Domain::InvalidVarNr();
+
 	auto max = cache.size();
 	while (max < nr) {
-		tie(max, ignore) = this->new_variable(to_string(max + 1));
+		tie(max, ignore) = new_variable(to_string(max + 1));
 	}
 	return by_nr[nr - 1];
 }
@@ -96,6 +103,16 @@ vector<VarRef> Cache::sort(unordered_set<VarRef>& pile) const {
 			vec.push_back(v);
 	}
 	return vec;
+}
+
+void Cache::freeze(void) {
+	const std::lock_guard<std::mutex> lock(access);
+	frozen = true;
+}
+
+void Cache::thaw(void) {
+	const std::lock_guard<std::mutex> lock(access);
+	frozen = false;
 }
 
 }

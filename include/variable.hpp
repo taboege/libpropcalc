@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 #include <mutex>
+#include <stdexcept>
 #include <algorithm>
 #include <unordered_map>
 #include <unordered_set>
@@ -59,6 +60,15 @@ namespace Propcalc {
 	 * indirectly, you should prefer using that.
 	 */
 	using VarNr = unsigned int;
+
+	namespace X::Domain {
+		/**
+		 * This exception is thrown when a VarNr of zero is encountered.
+		 */
+		struct InvalidVarNr : std::out_of_range {
+			InvalidVarNr(void) : std::out_of_range("VarNr must be at least 1") { }
+		};
+	}
 
 	/**
 	 * libpropcalc was designed with most eyes towards applications
@@ -109,6 +119,16 @@ namespace Propcalc {
 		}
 	};
 
+	namespace X::Cache {
+		/**
+		 * This error is thrown when a frozen Cache object would need to
+		 * modify itself to fulfill a `resolve` or `unpack` request.
+		 */
+		struct Frozen : std::logic_error {
+			Frozen(void) : std::logic_error("Cache is frozen") { }
+		};
+	}
+
 	/**
 	 * Cache is a generic implementation of Domain.
 	 *
@@ -136,6 +156,7 @@ namespace Propcalc {
 		std::unordered_map<std::string, VarRef> by_name;
 		std::vector<VarRef> by_nr;
 		std::unordered_map<VarRef, VarNr> by_ref;
+		bool frozen = false;
 
 	protected:
 		mutable std::mutex access;
@@ -152,6 +173,11 @@ namespace Propcalc {
 		virtual std::vector<VarRef> list(void) const;
 		virtual size_t size(void) const;
 		virtual std::vector<VarRef> sort(std::unordered_set<VarRef>& pile) const;
+
+		/** Mark the Cache as immutable. No more variables will be created. */
+		void freeze(void);
+		/** Undo `freeze`. */
+		void thaw(void);
 	};
 }
 

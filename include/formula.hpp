@@ -45,10 +45,10 @@ namespace Propcalc {
 		 */
 		struct Connective : std::invalid_argument {
 			Ast::Type op;
-			std::shared_ptr<Domain> lhs;
-			std::shared_ptr<Domain> rhs;
+			std::shared_ptr<Propcalc::Domain> lhs;
+			std::shared_ptr<Propcalc::Domain> rhs;
 
-			Connective(Ast::Type op, std::shared_ptr<Domain> lhs, std::shared_ptr<Domain> rhs)
+			Connective(Ast::Type op, std::shared_ptr<Propcalc::Domain> lhs, std::shared_ptr<Propcalc::Domain> rhs)
 				: std::invalid_argument("Arguments to logical connective have different domains"),
 				  op(op), lhs(lhs), rhs(rhs)
 			{ }
