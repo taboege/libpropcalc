@@ -204,24 +204,15 @@ namespace Propcalc {
 		std::vector<VarRef> vars(void) const;
 
 		/**
-		 * Evaluate the formula on the given assignment. If the assignment
-		 * is undefined on a variable that is encountered while evaluating,
-		 * an std::out_of_range exception is thrown.
-		 *
-		 * Beware that evaluation of even a partially defined assignment
-		 * can succeed (is not guaranteed to throw an exception), because
-		 * conjunction, disjunction and implication short-circuit.
+		 * Evaluate the root Ast node on the assignment. The same comments
+		 * apply.
 		 */
 		bool eval(const Assignment& assign) const { return root->eval(assign); }
 
 		/**
-		 * Evaluate the formula on the given (partial) assignment. Without
-		 * an assignment, the empty assignment is used. This has the effect
-		 * of replacing all variables defined in the assignment with their
-		 * values and inductively simplifying the AST nodes involving
-		 * constants. The resulting formula is either a sole constant or
-		 * does not have any constant nodes or variable nodes referred to
-		 * in the assignment anymore.
+		 * Partially evaluate the root Ast node on the (partial) assignment.
+		 * Without an assignment, the empty assignment is used. The same
+		 * comments as for Ast::simplify apply.
 		 */
 		Formula simplify(void) const { return simplify(Assignment()); }
 		Formula simplify(const Assignment& assign) const {

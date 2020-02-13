@@ -23,15 +23,28 @@
 #include <propcalc/assignment.hpp>
 
 namespace Propcalc {
-
+	/**
+	 * Ast is the base class for all AST nodes. It contains virtual methods
+	 * to identify the type of node, for stringification and evaluation,
+	 * which have to be overloaded to provide the specific node's semantics.
+	 */
 	class Ast {
 	public:
+		/**
+		 * Types of Ast nodes. These enum values are in 1-to-1 correspondence
+		 * with the subclasses of Ast.
+		 *
+		 * TODO: In the future, this may be removed in favor of `typeid`.
+		 */
 		enum class Type {
 			Const, Var,
 			Not, And, Or,
 			Impl, Eqv, Xor
 		};
 
+		/**
+		 * Bitmasks for associativity.
+		 */
 		enum class Assoc {
 			Non   = 0x0,
 			Left  = 0x1,
@@ -39,9 +52,8 @@ namespace Propcalc {
 			Both  = Left | Right
 		};
 
-		/*
-		 * Careful! These values must order the same as in the parser's
-		 * operator table in formula.cpp.
+		/**
+		 * Precedence numbers, the higher the tighter.
 		 */
 		enum class Prec {
 			Tight    = 20,
@@ -55,15 +67,39 @@ namespace Propcalc {
 			Loose    = 0
 		};
 
+		/** Return this node's Ast::Type. */
 		virtual Ast::Type  type(void)  const = 0;
+		/** Return this node's Ast::Assoc. */
 		virtual Ast::Assoc assoc(void) const = 0;
+		/** Return this node's Ast::Prec. */
 		virtual Ast::Prec  prec(void)  const = 0;
 
+		/**
+		 * Evaluate the subtree rooted at this node on the given assignment.
+		 * If the assignment is undefined on a variable that is encountered
+		 * while evaluating, an std::out_of_range exception is thrown.
+		 *
+		 * Beware that evaluation of even a partially defined assignment
+		 * can succeed (is not guaranteed to throw an exception), because
+		 * conjunction, disjunction and implication short-circuit.
+		 */
 		virtual bool eval(const Assignment& assign) const = 0;
+
+		/**
+		 * Evaluate the subtree rooted at this node on the given (partial)
+		 * assignment. This has the effect of replacing all variables
+		 * defined in the assignment with their values and inductively
+		 * simplifying the AST nodes involving constants. The resulting
+		 * formula is either a sole constant or does not have any constant
+		 * nodes or variable nodes referred to in the assignment anymore.
+		 */
 		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const = 0;
 
+		/** Convert subtree to infix. */
 		virtual std::string to_infix(void)   const = 0;
+		/** Convert subtree to prefix (polish notation). */
 		virtual std::string to_prefix(void)  const = 0;
+		/** Convert subtree to postfix (reverse polish notation). */
 		virtual std::string to_postfix(void) const = 0;
 
 		class Const;
