@@ -19,8 +19,8 @@
 #include <memory>
 #include <vector>
 #include <mutex>
-#include <map>
 #include <algorithm>
+#include <unordered_map>
 #include <unordered_set>
 
 namespace Propcalc {
@@ -68,9 +68,9 @@ namespace Propcalc {
 	class Cache : public Domain {
 	private:
 		std::vector<std::unique_ptr<Variable>> cache;
-		std::map<std::string, VarRef> by_name;
+		std::unordered_map<std::string, VarRef> by_name;
 		std::vector<VarRef> by_nr;
-		std::map<VarRef, VarNr> by_ref;
+		std::unordered_map<VarRef, VarNr> by_ref;
 
 	protected:
 		mutable std::mutex access;

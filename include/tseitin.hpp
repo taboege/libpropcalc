@@ -17,6 +17,7 @@
 
 #include <queue>
 #include <memory>
+#include <unordered_map>
 
 #include <propcalc/ast.hpp>
 #include <propcalc/stream.hpp>
@@ -55,7 +56,7 @@ namespace Propcalc {
 
 		class Domain : public Cache {
 		private:
-			std::map<std::shared_ptr<Ast>, VarRef> astcache;
+			std::unordered_map<std::shared_ptr<Ast>, VarRef> astcache;
 
 		public:
 			VarRef get(std::shared_ptr<Ast> ast);
