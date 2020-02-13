@@ -59,7 +59,6 @@ namespace Propcalc {
 		virtual Ast::Assoc assoc(void) const = 0;
 		virtual Ast::Prec  prec(void)  const = 0;
 
-		virtual void fill_vars(std::unordered_set<VarRef>& pile) const = 0;
 		virtual bool eval(const Assignment& assign) const = 0;
 		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const = 0;
 
@@ -87,7 +86,6 @@ namespace Propcalc {
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Non;     }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Symbolic; }
 
-		virtual void fill_vars(std::unordered_set<VarRef>&) const { }
 		virtual bool eval(const Assignment&) const { return value; }
 		virtual std::shared_ptr<Ast> simplify(const Assignment&) const {
 			return std::make_shared<Ast::Const>(value);
@@ -108,10 +106,6 @@ namespace Propcalc {
 		virtual Ast::Type  type(void)  const { return Ast::Type::Var;      }
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Non;     }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Symbolic; }
-
-		virtual void fill_vars(std::unordered_set<VarRef>& pile) const {
-			pile.insert(var);
-		}
 
 		virtual bool eval(const Assignment& assign) const { return assign[var]; }
 
@@ -139,10 +133,6 @@ namespace Propcalc {
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Non;   }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Notish; }
 
-		virtual void fill_vars(std::unordered_set<VarRef>& pile) const {
-			rhs->fill_vars(pile);
-		}
-
 		virtual bool eval(const Assignment& assign) const { return ! rhs->eval(assign); }
 
 		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const;
@@ -162,11 +152,6 @@ namespace Propcalc {
 		virtual Ast::Type  type(void)  const { return Ast::Type::And;    }
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both;  }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Andish; }
-
-		virtual void fill_vars(std::unordered_set<VarRef>& pile) const {
-			lhs->fill_vars(pile);
-			rhs->fill_vars(pile);
-		}
 
 		virtual bool eval(const Assignment& assign) const { return lhs->eval(assign) && rhs->eval(assign); }
 
@@ -188,11 +173,6 @@ namespace Propcalc {
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both; }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Orish; }
 
-		virtual void fill_vars(std::unordered_set<VarRef>& pile) const {
-			lhs->fill_vars(pile);
-			rhs->fill_vars(pile);
-		}
-
 		virtual bool eval(const Assignment& assign) const { return lhs->eval(assign) || rhs->eval(assign); }
 
 		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const;
@@ -212,11 +192,6 @@ namespace Propcalc {
 		virtual Ast::Type  type(void)  const { return Ast::Type::Impl;    }
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Right;  }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Implish; }
-
-		virtual void fill_vars(std::unordered_set<VarRef>& pile) const {
-			lhs->fill_vars(pile);
-			rhs->fill_vars(pile);
-		}
 
 		virtual bool eval(const Assignment& assign) const { return !lhs->eval(assign) || rhs->eval(assign); }
 
@@ -238,11 +213,6 @@ namespace Propcalc {
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both;  }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Eqvish; }
 
-		virtual void fill_vars(std::unordered_set<VarRef>& pile) const {
-			lhs->fill_vars(pile);
-			rhs->fill_vars(pile);
-		}
-
 		virtual bool eval(const Assignment& assign) const { return lhs->eval(assign) == rhs->eval(assign); }
 
 		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const;
@@ -262,11 +232,6 @@ namespace Propcalc {
 		virtual Ast::Type  type(void)  const { return Ast::Type::Xor;    }
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both;  }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Xorish; }
-
-		virtual void fill_vars(std::unordered_set<VarRef>& pile) const {
-			lhs->fill_vars(pile);
-			rhs->fill_vars(pile);
-		}
 
 		virtual bool eval(const Assignment& assign) const { return lhs->eval(assign) != rhs->eval(assign); }
 

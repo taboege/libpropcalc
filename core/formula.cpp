@@ -438,8 +438,61 @@ Formula::Formula(Stream<Clause>& clauses, shared_ptr<Domain> domain) :
 }
 
 vector<VarRef> Formula::vars(void) const {
+	queue<Ast*> todo;
 	unordered_set<const Variable *> pile;
-	root->fill_vars(pile);
+
+	todo.push(root.get());
+	while (!todo.empty()) {
+		Ast* node = todo.front();
+		todo.pop();
+
+		switch (node->type()) {
+			case Ast::Type::Const: {
+				/* nothing */
+				break;
+			}
+			case Ast::Type::Var: {
+				auto c = static_cast<Ast::Var*>(node);
+				pile.insert(c->var);
+				break;
+			}
+			case Ast::Type::Not: {
+				auto c = static_cast<Ast::Not*>(node);
+				todo.push(c->rhs.get());
+				break;
+			}
+			case Ast::Type::And: {
+				auto c = static_cast<Ast::And*>(node);
+				todo.push(c->lhs.get());
+				todo.push(c->rhs.get());
+				break;
+			}
+			case Ast::Type::Or: {
+				auto c = static_cast<Ast::Or*>(node);
+				todo.push(c->lhs.get());
+				todo.push(c->rhs.get());
+				break;
+			}
+			case Ast::Type::Impl: {
+				auto c = static_cast<Ast::Impl*>(node);
+				todo.push(c->lhs.get());
+				todo.push(c->rhs.get());
+				break;
+			}
+			case Ast::Type::Eqv: {
+				auto c = static_cast<Ast::Eqv*>(node);
+				todo.push(c->lhs.get());
+				todo.push(c->rhs.get());
+				break;
+			}
+			case Ast::Type::Xor: {
+				auto c = static_cast<Ast::Xor*>(node);
+				todo.push(c->lhs.get());
+				todo.push(c->rhs.get());
+				break;
+			}
+		}
+	}
 	return domain->sort(pile);
 }
 
