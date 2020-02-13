@@ -20,6 +20,7 @@
 #include <vector>
 #include <mutex>
 #include <map>
+#include <algorithm>
 #include <unordered_set>
 
 namespace Propcalc {
@@ -40,13 +41,28 @@ namespace Propcalc {
 	class Domain {
 	public:
 		virtual std::string name(VarRef var) { return var->name; }
+
 		virtual VarRef resolve(std::string name) = 0;
 		virtual VarNr  pack(VarRef var)          = 0;
 		virtual VarRef unpack(VarNr nr)          = 0;
 
 		virtual std::vector<VarRef> list(void) const = 0;
-		virtual size_t size(void) const = 0;
-		virtual std::vector<VarRef> sort(std::unordered_set<VarRef>& pile) const = 0;
+
+		virtual size_t size(void) const {
+			return list().size();
+		}
+
+		virtual std::vector<VarRef> sort(std::unordered_set<VarRef>& pile) {
+			std::vector<VarRef> sorted(pile.size());
+			std::copy(pile.begin(), pile.end(), sorted.begin());
+
+			std::sort(sorted.begin(), sorted.end(),
+				[&] (VarRef a, VarRef b) -> bool {
+					return pack(a) < pack(b);
+			});
+
+			return sorted;
+		}
 	};
 
 	class Cache : public Domain {
