@@ -83,6 +83,9 @@ size_t Cache::size(void) const {
 	return cache.size();
 }
 
+/**
+ * Slightly more efficient sorting than the default in Domain.
+ */
 vector<VarRef> Cache::sort(unordered_set<VarRef>& pile) const {
 	const std::lock_guard<std::mutex> lock(access);
 	vector<VarRef> vec;
