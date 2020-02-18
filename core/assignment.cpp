@@ -39,8 +39,8 @@ bool Assignment::exists(VarRef var) const {
 	return assign.count(var) > 0;
 }
 
-set<VarRef> Assignment::set(void) const {
-	auto set = std::set<VarRef>();
+unordered_set<VarRef> Assignment::set(void) const {
+	auto set = std::unordered_set<VarRef>();
 	for (auto& p : assign) {
 		if (p.second)
 			set.insert(p.first);
