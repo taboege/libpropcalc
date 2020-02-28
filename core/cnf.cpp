@@ -50,7 +50,7 @@ CNF& CNF::operator++(void) {
 			}
 		}
 
-		if (!fm.eval(last)) {
+		if (!current->eval(last)) {
 			cl = ~last;
 			break; /* found the next clause */
 		}
