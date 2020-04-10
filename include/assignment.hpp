@@ -15,6 +15,8 @@
 #ifndef PROPCALC_ASSIGNMENT_HPP
 #define PROPCALC_ASSIGNMENT_HPP
 
+#include <iostream>
+
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
@@ -71,6 +73,16 @@ namespace Propcalc {
 		bool&       operator[](VarRef v);
 		bool        operator[](VarRef v) const;
 	};
+
+	namespace {
+		[[maybe_unused]]
+		std::ostream& operator<<(std::ostream& os, const Assignment& assign) {
+			os << "{ ";
+			for (auto& v : assign.vars())
+				os << v->name << "(" << assign[v] << ") ";
+			return os << "}";
+		}
+	}
 }
 
 #endif /* PROPCALC_ASSIGNMENT_HPP */

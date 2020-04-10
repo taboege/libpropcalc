@@ -203,6 +203,11 @@ namespace Propcalc {
 		 */
 		std::vector<VarRef> vars(void) const;
 
+		/** Return an empty assignment */
+		Assignment assignment(void) const {
+			return Assignment(vars());
+		}
+
 		/**
 		 * Evaluate the root Ast node on the assignment. The same comments
 		 * apply.
