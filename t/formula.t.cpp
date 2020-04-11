@@ -9,6 +9,8 @@ using namespace TAP;
 using namespace Propcalc;
 
 static auto ttfms = std::vector<Formula>{
+	{"\\T"}, {"\\F"},
+
 	{"a"}, {"~a"},
 
 	{"a & b"}, {"~a & b"},
@@ -25,6 +27,9 @@ static auto ttfms = std::vector<Formula>{
 };
 
 static auto ttvals = std::vector<std::vector<bool>>{
+	{ true },  /* \T */
+	{ false }, /* \F */
+
 	/* [~a], [a] */
 	{ false, true }, /*  a */
 	{ true, false }, /* ~a */
@@ -67,7 +72,13 @@ static bool is_truthtable(const Formula& f, std::vector<bool>& ttval, std::strin
 	if (message.empty())
 		message = f.to_postfix();
 
-	auto tt = f.truthtable();
+	auto tt = f.truthtable().cache();
+	if (tt.size() != 1UL << f.vars().size()) {
+		fail(message);
+		diag("truthtable has ", tt.size(), " rows instead of ", 1UL << f.vars().size());
+		return false;
+	}
+
 	unsigned int idx = 0;
 	for (const auto& [assigned, value] : tt) {
 		is_ok &= value == ttval[idx];
@@ -89,6 +100,8 @@ static bool is_truthtable(const Formula& f, std::vector<bool>& ttval, std::strin
 }
 
 static auto testfms = std::vector<Formula>{
+	{"\\T"}, {"\\F"},
+
 	{"a"}, {"~a"},
 
 	{"a & b"}, {"~a & b"}, {"a & ~b"}, {"~a & ~b"},
@@ -127,7 +140,8 @@ static auto testfms = std::vector<Formula>{
 
 	{"a ^ b ^ c"}, {"~a ^ b ^ c"}, {"a ^ ~b ^ c"}, {"a ^ b ^ ~c"}, {"~a ^ ~b ^ c"}, {"~a ^ b ^ ~c"}, {"a ^ ~b ^ ~c"}, {"~a ^ ~b ^ ~c"},
 
-	{"(ab&3 | x&a34) -> (\\T ^ x) -> (y = x) <-> (ab | cd ^ a34)"},
+	{"x & y > x"},
+	//{"(ab&3 | x&a34) -> (\\T ^ x) -> (y = x) <-> (ab | cd ^ a34)"},
 };
 
 // TODO: This should be a method on Clause as soon as Clause is a real type.
@@ -174,31 +188,41 @@ static bool is_eqv(const Formula& f, CNF& g, std::string message = "") {
 
 static bool is_eqv(const Formula& f, Tseitin& g, std::string message = "") {
 	bool is_ok = true;
-	Assignment assign;
+	bool consistent, expected;
+	Assignment assign, lassign;
 
 	if (message.empty())
 		message = f.to_postfix();
 
 	auto h = g.cache();
-	assign = f.assignment();
-	while (!assign.overflown()) {
-		Assignment lassign = assign; //h.lift(assign);
-		is_ok &= f.eval(assign) == clstream_eval(h, lassign);
+
+	/* Go over all assignments on the Tseitin domain. If the assignment is
+	 * consistent (the lift of its projection), then it must equal the value
+	 * of the original formula. Otherwise it must be false. */
+	lassign = Assignment(g.get_domain()->list());
+	while (!lassign.overflown()) {
+		assign = g.project(lassign);
+		consistent = g.lift(assign) == lassign;
+		expected = consistent ? f.eval(assign) : false;
+		is_ok &= clstream_eval(h, lassign) == expected;
 		if (!is_ok)
 			break;
-		++assign;
+		++lassign;
 	}
 
 	if (!ok(is_ok, message)) {
-		diag("mismatched at assignment ", assign);
-		diag("  Got:      ", clstream_eval(h, assign));
-		diag("  Expected: ", f.eval(assign));
+		if (consistent)
+			diag("mismatched at consistent assignment ", assign);
+		else
+			diag("mismatched at inconsistent assignment ", lassign);
+		diag("  Got:      ", clstream_eval(h, lassign));
+		diag("  Expected: ", expected);
 	}
 	return is_ok;
 }
 
 int main(void) {
-	plan(7);
+	plan(11);
 
 	std::cout << std::boolalpha;
 
@@ -215,8 +239,17 @@ int main(void) {
 		false, "unsatisfying assignment (long-circuit)");
 
 	throws<std::out_of_range>([&] {
-		diag(fm.eval(Assignment({{ y, false }})) ? "true" : "false");
+		diag(fm.eval(Assignment({{ y, false }})) ? true : false);
 	}, "eval over undefined variable throws");
+
+	is(Formula("\\T").truthtable().cache().size(), 1,
+		"\\T has 1 row in truthtable");
+	is(Formula("\\F").truthtable().cache().size(), 1,
+		"\\F has 1 row in truthtable");
+	is(Formula("~a").truthtable().cache().size(), 2,
+		"~a has 2 rows in truthtable");
+	is(Formula("(a|b)^(a>c)=(~a&(a|b|x))").truthtable().cache().size(), 16,
+		"(a|b)^(a>c)=(~a&(a|b|x)) has 16 row in truthtable");
 
 	SUBTEST("truthtable") {
 		plan(std::size(ttfms));
@@ -235,10 +268,10 @@ int main(void) {
 	}
 
 	SUBTEST("tseitin") {
-		//plan(std::size(testfms));
+		plan(std::size(testfms));
 		for (auto& f : testfms) {
 			Tseitin tsei = f.tseitin();
-			//is_eqv(f, tsei);
+			is_eqv(f, tsei);
 		}
 	}
 

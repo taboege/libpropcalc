@@ -33,7 +33,7 @@ VarRef Tseitin::Domain::get(std::shared_ptr<Ast> ast) {
 	auto it = astcache.find(ast);
 	if (it == astcache.end()) {
 		auto uvar = make_unique<Tseitin::Variable>(ast);
-		tie(std::ignore, var) = this->put_variable(move(uvar));
+		tie(std::ignore, var) = put_variable(move(uvar));
 		astcache.insert({ ast, var });
 	}
 	else {
@@ -42,16 +42,29 @@ VarRef Tseitin::Domain::get(std::shared_ptr<Ast> ast) {
 	return var;
 }
 
+Tseitin::Tseitin(const Formula& fm) : fm(fm) {
+	vars = std::make_shared<Tseitin::Domain>();
+	/* Require that the root node be true. */
+	clauses.push(make_clause({ {vars->get(fm.root), true} }));
+	/* Kick off recursive conversion of the AST structure
+	 * into CNF clauses. */
+	queue.push(fm.root);
+	++*this; /* make the first clause available */
+}
+
 Tseitin& Tseitin::operator++(void) {
 	while (true) {
 		if (clauses.size() > 0) {
 			last = move(clauses.front());
 			clauses.pop();
+			valid = true;
 			break; /* found the next clause */
 		}
 
-		if (queue.size() == 0)
+		if (queue.size() == 0) {
+			valid = false;
 			break; /* exhausted */
+		}
 
 		auto ast = queue.front();
 		queue.pop();

@@ -23,7 +23,7 @@ Assignment::Assignment(vector<VarRef> vars) {
 		order.push_back(v);
 		assign.insert({ v, false });
 	}
-	overflow = order.size() == 0;
+	overflow = false;
 }
 
 Assignment::Assignment(initializer_list<pair<VarRef, bool>> il) {
@@ -32,7 +32,7 @@ Assignment::Assignment(initializer_list<pair<VarRef, bool>> il) {
 		order.push_back(p.first);
 		assign.insert(p);
 	}
-	overflow = order.size() == 0;
+	overflow = false;
 }
 
 bool Assignment::exists(VarRef var) const {

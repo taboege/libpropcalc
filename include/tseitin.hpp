@@ -67,20 +67,45 @@ namespace Propcalc {
 		std::queue<std::shared_ptr<Ast>> queue;
 		std::queue<std::unique_ptr<Clause>> clauses;
 		std::unique_ptr<Clause> last;
+		/* Whether the iterator is valid, i.e. last was populated with
+		 * a new Assignment when operator++ last ran. */
+		bool valid;
 
 	public:
-		Tseitin(const Formula& fm) : fm(fm) {
-			vars = std::make_shared<Tseitin::Domain>();
-			queue.push(fm.root);
-			++*this; /* make the first clause available */
-		}
+		Tseitin(const Formula& fm);
 
 		std::shared_ptr<Propcalc::Domain> get_domain() {
 			return vars;
 		}
 
+		/** Lift an assignment from the source domain to the Tseitin domain. */
+		Assignment lift(const Assignment& assign) {
+			Assignment lassign;
+
+			for (auto& v : vars->list()) {
+				auto tv = static_cast<const Tseitin::Variable*>(v);
+				lassign[v] = tv->ast->eval(assign);
+			}
+			return lassign;
+		}
+
+		/** Project an assignment from the Tseitin domain to the source domain. */
+		Assignment project(const Assignment& lassign) {
+			Assignment assign;
+
+			for (auto& v : vars->list()) {
+				auto tv = static_cast<const Tseitin::Variable*>(v);
+				if (tv->ast->type() != Ast::Type::Var)
+					continue;
+				auto w = static_cast<const Ast::Var*>(tv->ast.get())->var;
+				assign[w] = lassign[v];
+			}
+
+			return assign;
+		}
+
 		operator bool(void) const {
-			return queue.size() > 0 || clauses.size() > 0;
+			return valid;
 		}
 
 		Clause operator*(void) const {

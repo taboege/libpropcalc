@@ -31,13 +31,13 @@ namespace Propcalc {
 
 	public:
 		Truthtable(const Formula& fm) :
-			fm(fm), last(fm.vars()) { }
+			fm(fm), last(fm.assignment()) { }
 
 		bool eval(void) const { return fm.eval(last); }
 		const Assignment& assigned(void) const { return last; }
 
 		std::pair<Assignment, bool> operator*(void) const {
-			return std::make_pair(this->assigned(), this->eval());
+			return std::make_pair(assigned(), eval());
 		}
 
 		operator bool(void) const {

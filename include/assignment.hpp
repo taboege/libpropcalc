@@ -33,6 +33,11 @@ namespace Propcalc {
 	 * Given an ordered set of variables, all Assignments on them are
 	 * totally ordered. Assignment overloads the (post-)increment operator
 	 * to produce the next one (or overflow).
+	 *
+	 * The Assignment created without constructor arguments is special
+	 * as it is immediately marked as overflown. All other constructors
+	 * mark the Assignment as not overflown, as even the empty set of
+	 * variables has one (empty) assignment.
 	 */
 	class Assignment {
 		std::vector<VarRef> order;
@@ -72,6 +77,10 @@ namespace Propcalc {
 		 * an std::out_of_range exception is thrown. */
 		bool&       operator[](VarRef v);
 		bool        operator[](VarRef v) const;
+
+		bool operator==(const Assignment& b) const {
+			return order == b.order && assign == b.assign;
+		}
 	};
 
 	namespace {
