@@ -24,6 +24,12 @@ static auto ttfms = std::vector<Formula>{
 	{"a > b > c"}, {"a > b = c"}, {"a > b ^ c"},
 	{"a = b = c"}, {"a = b ^ c"},
 	{"a ^ b ^ c"},
+
+	{"a & b & a"}, {"a & b | a"}, {"a & b > a"}, {"a & b = a"}, {"a & b ^ a"},
+	{"a | b | a"}, {"a | b > a"}, {"a | b = a"}, {"a | b ^ a"},
+	{"a > b > a"}, {"a > b = a"}, {"a > b ^ a"},
+	{"a = b = a"}, {"a = b ^ a"},
+	{"a ^ b ^ a"},
 };
 
 static auto ttvals = std::vector<std::vector<bool>>{
@@ -62,6 +68,23 @@ static auto ttvals = std::vector<std::vector<bool>>{
 	{ false, true, true, false, true, false, false, true },    /* a = b = c */
 	{ true, false, false, true, false, true, true, false },    /* a = b ^ c */
 	{ false, true, true, false, true, false, false, true },    /* a ^ b ^ c */
+
+	/* [~a ~b], [a ~b], [~a b] [a b] */
+	{ false, false, false, true }, /* a & b & a */
+	{ false, true, false, true },  /* a & b | a */
+	{ true, true, true, true },    /* a & b > a */
+	{ true, false, true, true },   /* a & b = a */
+	{ false, true, false, false }, /* a & b ^ a */
+	{ false, true, true, true },   /* a | b | a */
+	{ true, true, false, true },   /* a | b > a */
+	{ true, true, false, true },   /* a | b = a */
+	{ false, false, true, false }, /* a | b ^ a */
+	{ true, true, true, true },    /* a > b > a */
+	{ false, false, false, true }, /* a > b = a */
+	{ true, true, true, false },   /* a > b ^ a */
+	{ false, false, true, true },  /* a = b = a */
+	{ true, true, false, false },  /* a = b ^ a */
+	{ false, false, true, true },  /* a ^ b ^ a */
 };
 
 static bool is_truthtable(const Formula& f, std::vector<bool>& ttval, std::string message = "") {
@@ -140,8 +163,33 @@ static auto testfms = std::vector<Formula>{
 
 	{"a ^ b ^ c"}, {"~a ^ b ^ c"}, {"a ^ ~b ^ c"}, {"a ^ b ^ ~c"}, {"~a ^ ~b ^ c"}, {"~a ^ b ^ ~c"}, {"a ^ ~b ^ ~c"}, {"~a ^ ~b ^ ~c"},
 
-	{"x & y > x"},
-	//{"(ab&3 | x&a34) -> (\\T ^ x) -> (y = x) <-> (ab | cd ^ a34)"},
+	{"a & a"}, {"a & ~a"},
+	{"a | a"}, {"a | ~a"},
+	{"a > a"}, {"a > ~a"},
+	{"a = a"}, {"a = ~a"},
+	{"a ^ a"}, {"a ^ ~a"},
+
+	{"a & b & a"}, {"~a & b & a"}, {"a & ~b & a"}, {"a & b & ~a"}, {"~a & ~b & a"}, {"~a & b & ~a"}, {"a & ~b & ~a"}, {"~a & ~b & ~a"},
+	{"a & b | a"}, {"~a & b | a"}, {"a & ~b | a"}, {"a & b | ~a"}, {"~a & ~b | a"}, {"~a & b | ~a"}, {"a & ~b | ~a"}, {"~a & ~b | ~a"},
+	{"a | b & a"}, {"~a | b & a"}, {"a | ~b & a"}, {"a | b & ~a"}, {"~a | ~b & a"}, {"~a | b & ~a"}, {"a | ~b & ~a"}, {"~a | ~b & ~a"},
+	{"a & b > a"}, {"~a & b > a"}, {"a & ~b > a"}, {"a & b > ~a"}, {"~a & ~b > a"}, {"~a & b > ~a"}, {"a & ~b > ~a"}, {"~a & ~b > ~a"},
+	{"a > b & a"}, {"~a > b & a"}, {"a > ~b & a"}, {"a > b & ~a"}, {"~a > ~b & a"}, {"~a > b & ~a"}, {"a > ~b & ~a"}, {"~a > ~b & ~a"},
+	{"a & b = a"}, {"~a & b = a"}, {"a & ~b = a"}, {"a & b = ~a"}, {"~a & ~b = a"}, {"~a & b = ~a"}, {"a & ~b = ~a"}, {"~a & ~b = ~a"},
+	{"a = b & a"}, {"~a = b & a"}, {"a = ~b & a"}, {"a = b & ~a"}, {"~a = ~b & a"}, {"~a = b & ~a"}, {"a = ~b & ~a"}, {"~a = ~b & ~a"},
+	{"a & b ^ a"}, {"~a & b ^ a"}, {"a & ~b ^ a"}, {"a & b ^ ~a"}, {"~a & ~b ^ a"}, {"~a & b ^ ~a"}, {"a & ~b ^ ~a"}, {"~a & ~b ^ ~a"},
+	{"a ^ b & a"}, {"~a ^ b & a"}, {"a ^ ~b & a"}, {"a ^ b & ~a"}, {"~a ^ ~b & a"}, {"~a ^ b & ~a"}, {"a ^ ~b & ~a"}, {"~a ^ ~b & ~a"},
+
+	{"a | b | a"}, {"~a | b | a"}, {"a | ~b | a"}, {"a | b | ~a"}, {"~a | ~b | a"}, {"~a | b | ~a"}, {"a | ~b | ~a"}, {"~a | ~b | ~a"},
+	{"a | b > a"}, {"~a | b > a"}, {"a | ~b > a"}, {"a | b > ~a"}, {"~a | ~b > a"}, {"~a | b > ~a"}, {"a | ~b > ~a"}, {"~a | ~b > ~a"},
+	{"a > b | a"}, {"~a > b | a"}, {"a > ~b | a"}, {"a > b | ~a"}, {"~a > ~b | a"}, {"~a > b | ~a"}, {"a > ~b | ~a"}, {"~a > ~b | ~a"},
+	{"a | b = a"}, {"~a | b = a"}, {"a | ~b = a"}, {"a | b = ~a"}, {"~a | ~b = a"}, {"~a | b = ~a"}, {"a | ~b = ~a"}, {"~a | ~b = ~a"},
+	{"a = b | a"}, {"~a = b | a"}, {"a = ~b | a"}, {"a = b | ~a"}, {"~a = ~b | a"}, {"~a = b | ~a"}, {"a = ~b | ~a"}, {"~a = ~b | ~a"},
+	{"a | b ^ a"}, {"~a | b ^ a"}, {"a | ~b ^ a"}, {"a | b ^ ~a"}, {"~a | ~b ^ a"}, {"~a | b ^ ~a"}, {"a | ~b ^ ~a"}, {"~a | ~b ^ ~a"},
+	{"a ^ b | a"}, {"~a ^ b | a"}, {"a ^ ~b | a"}, {"a ^ b | ~a"}, {"~a ^ ~b | a"}, {"~a ^ b | ~a"}, {"a ^ ~b | ~a"}, {"~a ^ ~b | ~a"},
+};
+
+static auto extrafms = std::vector<Formula>{
+	{"(ab&3 | x&a34) -> (\\T ^ x) -> (y = x) <-> (ab | cd ^ a34)"},
 };
 
 // TODO: This should be a method on Clause as soon as Clause is a real type.
@@ -182,6 +230,9 @@ static bool is_eqv(const Formula& f, CNF& g, std::string message = "") {
 		diag("mismatched at assignment ", assign);
 		diag("  Got:      ", clstream_eval(h, assign));
 		diag("  Expected: ", f.eval(assign));
+		diag("CNF clauses:");
+		for (auto cl : h)
+			diag("  ", cl);
 	}
 	return is_ok;
 }
@@ -217,6 +268,9 @@ static bool is_eqv(const Formula& f, Tseitin& g, std::string message = "") {
 			diag("mismatched at inconsistent assignment ", lassign);
 		diag("  Got:      ", clstream_eval(h, lassign));
 		diag("  Expected: ", expected);
+		diag("Tseitin clauses:");
+		for (auto cl : h)
+			diag("  ", cl);
 	}
 	return is_ok;
 }

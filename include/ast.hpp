@@ -74,6 +74,9 @@ namespace Propcalc {
 		/** Return this node's Ast::Prec. */
 		virtual Ast::Prec  prec(void)  const = 0;
 
+		/** Whether two subtrees are recursively equal. */
+		virtual bool equals(const Ast& b) const = 0;
+
 		/**
 		 * Evaluate the subtree rooted at this node on the given assignment.
 		 * If the assignment is undefined on a variable that is encountered
@@ -122,6 +125,12 @@ namespace Propcalc {
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Non;     }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Symbolic; }
 
+		virtual bool equals(const Ast& b) const {
+			if (b.type() != Ast::Type::Const)
+				return false;
+			return static_cast<const Ast::Const&>(b).value == value;
+		}
+
 		virtual bool eval(const Assignment&) const { return value; }
 		virtual std::shared_ptr<Ast> simplify(const Assignment&) const {
 			return std::make_shared<Ast::Const>(value);
@@ -142,6 +151,12 @@ namespace Propcalc {
 		virtual Ast::Type  type(void)  const { return Ast::Type::Var;      }
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Non;     }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Symbolic; }
+
+		virtual bool equals(const Ast& b) const {
+			if (b.type() != Ast::Type::Var)
+				return false;
+			return static_cast<const Ast::Var&>(b).var == var;
+		}
 
 		virtual bool eval(const Assignment& assign) const { return assign[var]; }
 
@@ -169,6 +184,12 @@ namespace Propcalc {
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Non;   }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Notish; }
 
+		virtual bool equals(const Ast& b) const {
+			if (b.type() != Ast::Type::Not)
+				return false;
+			return rhs->equals(*static_cast<const Ast::Not&>(b).rhs);
+		}
+
 		virtual bool eval(const Assignment& assign) const { return ! rhs->eval(assign); }
 
 		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const;
@@ -188,6 +209,13 @@ namespace Propcalc {
 		virtual Ast::Type  type(void)  const { return Ast::Type::And;    }
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both;  }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Andish; }
+
+		virtual bool equals(const Ast& b) const {
+			if (b.type() != Ast::Type::And)
+				return false;
+			return lhs->equals(*static_cast<const Ast::And&>(b).lhs)
+			    && rhs->equals(*static_cast<const Ast::And&>(b).rhs);
+		}
 
 		virtual bool eval(const Assignment& assign) const { return lhs->eval(assign) && rhs->eval(assign); }
 
@@ -209,6 +237,13 @@ namespace Propcalc {
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both; }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Orish; }
 
+		virtual bool equals(const Ast& b) const {
+			if (b.type() != Ast::Type::Or)
+				return false;
+			return lhs->equals(*static_cast<const Ast::Or&>(b).lhs)
+			    && rhs->equals(*static_cast<const Ast::Or&>(b).rhs);
+		}
+
 		virtual bool eval(const Assignment& assign) const { return lhs->eval(assign) || rhs->eval(assign); }
 
 		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const;
@@ -228,6 +263,13 @@ namespace Propcalc {
 		virtual Ast::Type  type(void)  const { return Ast::Type::Impl;    }
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Right;  }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Implish; }
+
+		virtual bool equals(const Ast& b) const {
+			if (b.type() != Ast::Type::Impl)
+				return false;
+			return lhs->equals(*static_cast<const Ast::Impl&>(b).lhs)
+			    && rhs->equals(*static_cast<const Ast::Impl&>(b).rhs);
+		}
 
 		virtual bool eval(const Assignment& assign) const { return !lhs->eval(assign) || rhs->eval(assign); }
 
@@ -249,6 +291,13 @@ namespace Propcalc {
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both;  }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Eqvish; }
 
+		virtual bool equals(const Ast& b) const {
+			if (b.type() != Ast::Type::Eqv)
+				return false;
+			return lhs->equals(*static_cast<const Ast::Eqv&>(b).lhs)
+			    && rhs->equals(*static_cast<const Ast::Eqv&>(b).rhs);
+		}
+
 		virtual bool eval(const Assignment& assign) const { return lhs->eval(assign) == rhs->eval(assign); }
 
 		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const;
@@ -268,6 +317,13 @@ namespace Propcalc {
 		virtual Ast::Type  type(void)  const { return Ast::Type::Xor;    }
 		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both;  }
 		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Xorish; }
+
+		virtual bool equals(const Ast& b) const {
+			if (b.type() != Ast::Type::Xor)
+				return false;
+			return lhs->equals(*static_cast<const Ast::Xor&>(b).lhs)
+			    && rhs->equals(*static_cast<const Ast::Xor&>(b).rhs);
+		}
 
 		virtual bool eval(const Assignment& assign) const { return lhs->eval(assign) != rhs->eval(assign); }
 
