@@ -47,7 +47,7 @@ static void throws_parser(const std::string& fm, const std::string& what, unsign
 	}
 }
 
-static Formula lives_parser(const std::string& fm, const std::string& message, std::shared_ptr<Domain> domain = Formula::DefaultDomain) {
+static Formula lives_parser(const std::string& fm, const std::string& message, Domain* domain = &Formula::DefaultDomain) {
 	Formula F("[Sentinel formula]"); // formula may not be empty...
 	lives([&] { F = Formula(fm, domain); }, message.empty() ? fm : message);
 	return F;
@@ -71,9 +71,9 @@ int main(void) {
 	}
 
 	SUBTEST(8, "variable names and identities") {
-		auto temp = std::make_shared<Cache>();
-		Formula F = lives_parser("3 | 3_4 & ~xyz -> a25 = [_]", "", temp);
-		Formula G = lives_parser("[12|47] & ([xyz] ^ [Once upon a Time...])", "", temp);
+		Cache temp;
+		Formula F = lives_parser("3 | 3_4 & ~xyz -> a25 = [_]", "", &temp);
+		Formula G = lives_parser("[12|47] & ([xyz] ^ [Once upon a Time...])", "", &temp);
 		is(F.vars().size(), 5, "F has 5 variables");
 		is(G.vars().size(), 3, "G has 3 variables");
 		is((F & G).vars().size(), 7, "F & G has only 7 variables");
@@ -151,7 +151,7 @@ int main(void) {
 		is(F.to_prefix(),  "= > | & [ab] [3] & [x] [a34] > ^ \\T [x] = [y] [x] ^ | [ab] [cd] [a34]", "prefix");
 		is(F.to_infix(),   "[ab] & [3] | [x] & [a34] > (\\T ^ [x]) > ([y] = [x]) = [ab] | [cd] ^ [a34]", "infix");
 
-		is(F.get_domain(), Formula::DefaultDomain, "parser defaults to DefaultDomain");
+		is(F.domain, &Formula::DefaultDomain, "parser defaults to DefaultDomain");
 		is(F.vars().size(), 6, "correct variable count");
 	}
 

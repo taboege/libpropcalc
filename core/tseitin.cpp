@@ -55,6 +55,7 @@ end:
 
 Tseitin::Tseitin(const Formula& fm) : fm(fm) {
 	vars = std::make_shared<Tseitin::Domain>();
+	domain = vars.get();
 	/* Require that the root node be true. */
 	clauses.push(make_clause({ {vars->get(fm.root), true} }));
 	/* Kick off recursive conversion of the AST structure

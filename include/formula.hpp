@@ -45,10 +45,10 @@ namespace Propcalc {
 		 */
 		struct Connective : std::invalid_argument {
 			Ast::Type op;
-			std::shared_ptr<Propcalc::Domain> lhs;
-			std::shared_ptr<Propcalc::Domain> rhs;
+			Propcalc::Domain* lhs;
+			Propcalc::Domain* rhs;
 
-			Connective(Ast::Type op, std::shared_ptr<Propcalc::Domain> lhs, std::shared_ptr<Propcalc::Domain> rhs)
+			Connective(Ast::Type op, Propcalc::Domain* lhs, Propcalc::Domain* rhs)
 				: std::invalid_argument("Arguments to logical connective have different domains"),
 				  op(op), lhs(lhs), rhs(rhs)
 			{ }
@@ -66,19 +66,15 @@ namespace Propcalc {
 	 * appearing in the formula.
 	 */
 	class Formula {
-		std::shared_ptr<Domain> domain;
-		std::shared_ptr<Ast>    root;
-
-		friend class Truthtable;
-		friend class Tseitin;
-		friend class CNF;
-
 	public:
+		Domain* domain;
+		std::shared_ptr<Ast> root;
+
 		/**
 		 * DefaultDomain is the default global domain for variables used
 		 * by the Formula parser.
 		 */
-		static std::shared_ptr<Cache> DefaultDomain;
+		static Cache DefaultDomain;
 
 		/**
 		 * Parse a formula in infix form.
@@ -167,10 +163,10 @@ namespace Propcalc {
 		 *
 		 * Please pay attention to these differences when porting code.
 		 */
-		Formula(const std::string& fm, std::shared_ptr<Domain> domain = DefaultDomain);
+		Formula(const std::string& fm, Domain* domain = &DefaultDomain);
 
 		/** Wrap existing AST in a formula. */
-		Formula(std::shared_ptr<Ast> root, std::shared_ptr<Domain> domain = DefaultDomain) :
+		Formula(std::shared_ptr<Ast> root, Domain* domain = &DefaultDomain) :
 			domain(domain),
 			root(root)
 		{ }
@@ -182,7 +178,7 @@ namespace Propcalc {
 		 * is false (false being the identity element with respect to
 		 * disjunction).
 		 */
-		Formula(Clause& cl, std::shared_ptr<Domain> domain);
+		Formula(Clause& cl, Domain* domain);
 
 		/**
 		 * Convert a stream of Clause objects into a Formula. Returns a Formula
@@ -192,10 +188,7 @@ namespace Propcalc {
 		 * node, which is true (true being the identity element with respect
 		 * to conjunction).
 		 */
-		Formula(Stream<Clause>& clauses, std::shared_ptr<Domain> domain);
-
-		/** Get a shared_ptr of the Formula's domain. */
-		std::shared_ptr<Domain> get_domain() { return domain; }
+		Formula(Stream<Clause>& clauses, Domain* domain);
 
 		/**
 		 * Return all variables appearing in the formula sorted in ascending

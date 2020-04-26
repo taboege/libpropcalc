@@ -28,11 +28,11 @@ namespace Propcalc {
 	namespace DIMACS {
 		class In : public Stream<Clause> {
 			std::istream& in;
-			std::shared_ptr<Domain> domain;
+			Domain* domain;
 			Clause last;
 
 		public:
-			In(std::istream& in, std::shared_ptr<Domain> domain = std::make_shared<Cache>()) :
+			In(std::istream& in, Domain* domain = new Cache) :
 				in(in), domain(domain) {
 				++*this; /* fast-forward to first clause */
 			}
@@ -42,14 +42,14 @@ namespace Propcalc {
 			In& operator++(void);
 		};
 
-		Formula read(std::istream& in, std::shared_ptr<Domain> domain = std::make_shared<Cache>());
+		Formula read(std::istream& in, Domain* domain = new Cache);
 
 		class Out : public Stream<std::string> {
 			Stream<Clause>& st;
 			std::shared_ptr<Domain> domain;
 
 		public:
-			Out(Stream<Clause>& clauses, std::shared_ptr<Domain> domain) :
+			Out(Stream<Clause>& clauses, Domain* domain) :
 				st(clauses), domain(domain)
 			{ }
 
@@ -64,8 +64,8 @@ namespace Propcalc {
 			size_t nclauses;
 		};
 
-		void write(std::ostream& out, Stream<Clause>& clauses, std::shared_ptr<Domain> domain, std::vector<std::string> comments = {});
-		void write(std::ostream& out, Stream<Clause>& clauses, std::shared_ptr<Domain> domain, Header header);
+		void write(std::ostream& out, Stream<Clause>& clauses, Domain* domain, std::vector<std::string> comments = {});
+		void write(std::ostream& out, Stream<Clause>& clauses, Domain* domain, Header header);
 	}
 }
 

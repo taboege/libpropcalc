@@ -72,11 +72,9 @@ namespace Propcalc {
 		bool valid;
 
 	public:
-		Tseitin(const Formula& fm);
+		Propcalc::Domain* domain; /* = vars.get() */
 
-		std::shared_ptr<Propcalc::Domain> get_domain() {
-			return vars;
-		}
+		Tseitin(const Formula& fm);
 
 		/** Lift an assignment from the source domain to the Tseitin domain. */
 		Assignment lift(const Assignment& assign) {

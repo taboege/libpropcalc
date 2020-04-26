@@ -87,7 +87,7 @@ int main(int argc, char* argv[]) {
 
 	cout << "seen the following variables:" << endl; {
 		Propcalc::VarNr i = 1;
-		for (auto& v : Propcalc::Formula::DefaultDomain->list())
+		for (auto& v : Propcalc::Formula::DefaultDomain.list())
 			cout << v->to_string() << ": " << i++ << endl;
 	}
 	cout << endl;
@@ -155,9 +155,9 @@ int main(int argc, char* argv[]) {
 	cout << endl;
 
 	cout << "Allocating many variables using unpack:" << endl; {
-		Propcalc::Formula::DefaultDomain->unpack(15);
+		Propcalc::Formula::DefaultDomain.unpack(15);
 		Propcalc::VarNr i = 1;
-		for (auto& v : Propcalc::Formula::DefaultDomain->list())
+		for (auto& v : Propcalc::Formula::DefaultDomain.list())
 			cout << v->to_string() << ": " << i++ << endl;
 	}
 	cout << endl;
@@ -183,12 +183,12 @@ int main(int argc, char* argv[]) {
 	{
 		cout << "Writing DIMACS CNF file:" << endl;
 		auto cnf = fm.cnf();
-		Propcalc::DIMACS::write(cout, cnf, fm.get_domain());
+		Propcalc::DIMACS::write(cout, cnf, fm.domain);
 		cout << endl;
 
 		cout << "Writing DIMACS CNF of Tseitin transform:" << endl;
 		auto tsei = fm.tseitin();
-		Propcalc::DIMACS::write(cout, tsei, tsei.get_domain(), {"Tseitin transform of " + fm.to_infix()});
+		Propcalc::DIMACS::write(cout, tsei, tsei.domain, {"Tseitin transform of " + fm.to_infix()});
 	}
 	cout << endl;
 

@@ -66,7 +66,7 @@ DIMACS::In& DIMACS::In::operator++(void) {
 	return *this;
 }
 
-Formula DIMACS::read(istream& in, shared_ptr<Domain> domain) {
+Formula DIMACS::read(istream& in, Domain* domain) {
 	auto clauses = DIMACS::In(in, domain);
 	return Formula(clauses, domain);
 }
@@ -84,7 +84,7 @@ string DIMACS::Out::operator*(void) const {
 	return line;
 }
 
-void DIMACS::write(ostream& out, Stream<Clause>& clauses, shared_ptr<Domain> domain, vector<string> comments) {
+void DIMACS::write(ostream& out, Stream<Clause>& clauses, Domain* domain, vector<string> comments) {
 	auto cache = clauses.cache();
 	DIMACS::Header header{comments, 0, cache.size()};
 	for (auto cl : cache) {
@@ -96,7 +96,7 @@ void DIMACS::write(ostream& out, Stream<Clause>& clauses, shared_ptr<Domain> dom
 	DIMACS::write(out, cache.reset(), domain, header);
 }
 
-void DIMACS::write(ostream& out, Stream<Clause>& clauses, shared_ptr<Domain> domain, DIMACS::Header header) {
+void DIMACS::write(ostream& out, Stream<Clause>& clauses, Domain* domain, DIMACS::Header header) {
 	auto st = DIMACS::Out(clauses, domain);
 	for (auto& line : header.comments)
 		out << "c " << line << endl;

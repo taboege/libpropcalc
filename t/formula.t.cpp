@@ -250,7 +250,7 @@ static bool is_eqv(const Formula& f, Tseitin& g, std::string message = "") {
 	/* Go over all assignments on the Tseitin domain. If the assignment is
 	 * consistent (the lift of its projection), then it must equal the value
 	 * of the original formula. Otherwise it must be false. */
-	lassign = Assignment(g.get_domain()->list());
+	lassign = Assignment(g.domain->list());
 	while (!lassign.overflown()) {
 		assign = g.project(lassign);
 		consistent = g.lift(assign) == lassign;
@@ -281,9 +281,9 @@ int main(void) {
 	std::cout << std::boolalpha;
 
 	Formula fm("x -> y -> z");
-	VarRef x = fm.get_domain()->resolve("x");
-	VarRef y = fm.get_domain()->resolve("y");
-	VarRef z = fm.get_domain()->resolve("z");
+	VarRef x = fm.domain->resolve("x");
+	VarRef y = fm.domain->resolve("y");
+	VarRef z = fm.domain->resolve("z");
 
 	is(fm.simplify(Assignment({{ x, false }})).to_postfix(),
 		"\\T", "implication simplifies to true");

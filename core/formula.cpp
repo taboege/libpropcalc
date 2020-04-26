@@ -30,7 +30,7 @@ using namespace std;
 namespace Propcalc {
 
 /* Initialize the Formula ctor's default Domain. */
-shared_ptr<Cache> Formula::DefaultDomain = make_shared<Cache>();
+Cache Formula::DefaultDomain;
 
 /**
  * Types of operator nodes. These values are only used in the short
@@ -261,7 +261,7 @@ static void reduce(token tok, deque<pair<shared_ptr<Ast>, token>>& astdq) {
  * Parse a given formula string into a root AST node for a Formula object,
  * resolving variables with the given `domain`.
  */
-shared_ptr<Ast> parse(const char* s, shared_ptr<Domain> domain) {
+shared_ptr<Ast> parse(const char* s, Domain* domain) {
 	deque<pair<shared_ptr<Ast>, token>> astdq;
 	stack<token> ops;
 	expect next = EXPECT_TERM;
@@ -382,7 +382,7 @@ shared_ptr<Ast> parse(const char* s, shared_ptr<Domain> domain) {
 	}
 }
 
-Formula::Formula(const string& fm, shared_ptr<Domain> domain) :
+Formula::Formula(const string& fm, Domain* domain) :
 	domain(domain),
 	root(parse(fm.c_str(), domain))
 { }
@@ -413,12 +413,12 @@ static shared_ptr<Ast> clause_ast(Clause& cl) {
 	return astsp;
 }
 
-Formula::Formula(Clause& cl, shared_ptr<Domain> domain) :
+Formula::Formula(Clause& cl, Domain* domain) :
 	domain(domain) {
 	root = clause_ast(cl);
 }
 
-Formula::Formula(Stream<Clause>& clauses, shared_ptr<Domain> domain) :
+Formula::Formula(Stream<Clause>& clauses, Domain* domain) :
 	domain(domain) {
 	vector<shared_ptr<Ast>> cls;
 	for (auto cl : clauses)
@@ -513,31 +513,31 @@ Formula Formula::operator~(void) {
 }
 
 Formula Formula::operator&(const Formula& rhs) {
-	if (domain.get() != rhs.domain.get())
+	if (domain != rhs.domain)
 		throw X::Formula::Connective(Ast::Type::And, domain, rhs.domain);
 	return Formula(make_shared<Ast::And>(root, rhs.root), domain);
 }
 
 Formula Formula::operator|(const Formula& rhs) {
-	if (domain.get() != rhs.domain.get())
+	if (domain != rhs.domain)
 		throw X::Formula::Connective(Ast::Type::Or, domain, rhs.domain);
 	return Formula(make_shared<Ast::Or>(root, rhs.root), domain);
 }
 
 Formula Formula::operator>>(const Formula& rhs) {
-	if (domain.get() != rhs.domain.get())
+	if (domain != rhs.domain)
 		throw X::Formula::Connective(Ast::Type::Impl, domain, rhs.domain);
 	return Formula(make_shared<Ast::Impl>(root, rhs.root), domain);
 }
 
 Formula Formula::operator==(const Formula& rhs) {
-	if (domain.get() != rhs.domain.get())
+	if (domain != rhs.domain)
 		throw X::Formula::Connective(Ast::Type::Eqv, domain, rhs.domain);
 	return Formula(make_shared<Ast::Eqv>(root, rhs.root), domain);
 }
 
 Formula Formula::operator^(const Formula& rhs) {
-	if (domain.get() != rhs.domain.get())
+	if (domain != rhs.domain)
 		throw X::Formula::Connective(Ast::Type::Xor, domain, rhs.domain);
 	return Formula(make_shared<Ast::Xor>(root, rhs.root), domain);
 }
