@@ -232,17 +232,26 @@ namespace Propcalc {
 		std::string to_postfix(void) const { return root->to_postfix(); }
 
 		/** Construct a new formula negating this one. */
-		Formula operator~(void);
+		Formula notf(void) const;
 		/** Construct a new formula as the conjunction of this one and rhs. */
-		Formula operator&(const Formula& rhs);
+		Formula andf(const Formula& rhs) const;
 		/** Construct a new formula as the disjunction of this one and rhs. */
-		Formula operator|(const Formula& rhs);
+		Formula orf(const Formula& rhs) const;
 		/** Construct a new formula as the implication of this one and rhs. */
-		Formula operator>>(const Formula& rhs);
+		Formula thenf(const Formula& rhs) const;
 		/** Construct a new formula as the equivalence of this one and rhs. */
-		Formula operator==(const Formula& rhs);
+		Formula eqvf(const Formula& rhs) const;
 		/** Construct a new formula as the exclusive-or of this one and rhs. */
-		Formula operator^(const Formula& rhs);
+		Formula xorf(const Formula& rhs) const;
+
+		Formula operator~(void) const { return notf(); }
+		Formula operator&(const Formula& rhs) const { return andf(rhs); }
+		Formula operator|(const Formula& rhs) const { return orf(rhs);  }
+		Formula operator^(const Formula& rhs) const { return xorf(rhs); }
+
+		bool operator==(const Formula& rhs) {
+			return domain == rhs.domain && root->equals(*rhs.root);
+		}
 	};
 }
 

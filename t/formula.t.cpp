@@ -314,8 +314,12 @@ int main(void) {
 	}
 
 	SUBTEST("cnf") {
-		plan(std::size(testfms));
+		plan(std::size(testfms) + std::size(extrafms));
 		for (auto& f : testfms) {
+			CNF cnf = f.cnf();
+			is_eqv(f, cnf);
+		}
+		for (auto& f : extrafms) {
 			CNF cnf = f.cnf();
 			is_eqv(f, cnf);
 		}

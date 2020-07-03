@@ -508,35 +508,35 @@ CNF Formula::cnf(void) const {
 	return CNF(*this);
 }
 
-Formula Formula::operator~(void) {
+Formula Formula::notf(void) const {
 	return Formula(make_shared<Ast::Not>(root), domain);
 }
 
-Formula Formula::operator&(const Formula& rhs) {
+Formula Formula::andf(const Formula& rhs) const {
 	if (domain != rhs.domain)
 		throw X::Formula::Connective(Ast::Type::And, domain, rhs.domain);
 	return Formula(make_shared<Ast::And>(root, rhs.root), domain);
 }
 
-Formula Formula::operator|(const Formula& rhs) {
+Formula Formula::orf(const Formula& rhs) const {
 	if (domain != rhs.domain)
 		throw X::Formula::Connective(Ast::Type::Or, domain, rhs.domain);
 	return Formula(make_shared<Ast::Or>(root, rhs.root), domain);
 }
 
-Formula Formula::operator>>(const Formula& rhs) {
+Formula Formula::thenf(const Formula& rhs) const {
 	if (domain != rhs.domain)
 		throw X::Formula::Connective(Ast::Type::Impl, domain, rhs.domain);
 	return Formula(make_shared<Ast::Impl>(root, rhs.root), domain);
 }
 
-Formula Formula::operator==(const Formula& rhs) {
+Formula Formula::eqvf(const Formula& rhs) const {
 	if (domain != rhs.domain)
 		throw X::Formula::Connective(Ast::Type::Eqv, domain, rhs.domain);
 	return Formula(make_shared<Ast::Eqv>(root, rhs.root), domain);
 }
 
-Formula Formula::operator^(const Formula& rhs) {
+Formula Formula::xorf(const Formula& rhs) const {
 	if (domain != rhs.domain)
 		throw X::Formula::Connective(Ast::Type::Xor, domain, rhs.domain);
 	return Formula(make_shared<Ast::Xor>(root, rhs.root), domain);
