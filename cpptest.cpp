@@ -117,7 +117,7 @@ int main(int argc, char* argv[]) {
 	for (const auto& [assigned, value] : fm.truthtable()) {
 		if (value) {
 			cout << "{ ";
-			for (auto& v : assigned.set())
+			for (auto& v : assigned.vars())
 				cout << v->name << " ";
 			cout << "}" << endl;
 		}

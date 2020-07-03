@@ -18,40 +18,39 @@ using namespace std;
 
 namespace Propcalc {
 
-Assignment::Assignment(vector<VarRef> vars) {
+VarMap::VarMap(vector<VarRef> vars) {
 	for (auto& v : vars) {
 		order.push_back(v);
-		assign.insert({ v, false });
+		vmap.insert({ v, false });
 	}
-	overflow = false;
 }
 
-Assignment::Assignment(initializer_list<pair<VarRef, bool>> il) {
+VarMap::VarMap(initializer_list<pair<VarRef, bool>> il) {
 	/* Order specified by the list */
 	for (auto& p : il) {
 		order.push_back(p.first);
-		assign.insert(p);
+		vmap.insert(p);
 	}
-	overflow = false;
 }
 
-bool Assignment::exists(VarRef var) const {
-	return assign.count(var) > 0;
+bool VarMap::exists(VarRef var) const {
+	return vmap.count(var) > 0;
 }
 
-unordered_set<VarRef> Assignment::set(void) const {
-	auto set = std::unordered_set<VarRef>();
-	for (auto& p : assign) {
-		if (p.second)
-			set.insert(p.first);
-	}
-	return set;
+bool& VarMap::operator[](VarRef v) {
+	if (not vmap.count(v))
+		order.push_back(v);
+	return vmap[v];
+}
+
+bool VarMap::operator[](VarRef v) const {
+	return vmap.at(v);
 }
 
 Assignment Assignment::operator~(void) const {
 	Assignment neg(order);
 	for (auto& v : order)
-		neg[v] = !assign.at(v);
+		neg[v] = !vmap.at(v);
 	return neg;
 }
 
@@ -60,12 +59,12 @@ Assignment& Assignment::operator++(void) {
 	 * which adheres to the variable order given at construction. */
 	size_t n = 0;
 	for (auto& v : order) {
-		bool bit = assign.at(v) ^= true;
+		bool bit = vmap.at(v) ^= true;
 		if (bit)
 			break;
 		n++;
 	}
-	overflow = n >= assign.size();
+	overflow = n >= vmap.size();
 	return *this;
 }
 
@@ -73,16 +72,6 @@ Assignment Assignment::operator++(int) {
 	Assignment tmp(*this);
 	operator++();
 	return tmp;
-}
-
-bool& Assignment::operator[](VarRef v) {
-	if (not assign.count(v))
-		order.push_back(v);
-	return assign[v];
-}
-
-bool Assignment::operator[](VarRef v) const {
-	return assign.at(v);
 }
 
 }
