@@ -1,7 +1,7 @@
 /*
- * ast.hpp - AST classes
+ * ast.hpp - Ast class
  *
- * Copyright (C) 2019 Tobias Boege
+ * Copyright (C) 2019-2020 Tobias Boege
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the Artistic License 2.0
@@ -16,46 +16,50 @@
 #define PROPCALC_AST_HPP
 
 #include <string>
-#include <memory>
-#include <vector>
 
 #include <propcalc/variable.hpp>
-#include <propcalc/assignment.hpp>
 
 namespace Propcalc {
 	/**
-	 * Ast is the base class for all AST nodes. It contains virtual methods
-	 * to identify the type of node, for stringification and evaluation,
-	 * which have to be overloaded to provide the specific node's semantics.
+	 * Ast is a data structure for storing a node in the preorder traversal
+	 * of an abstract syntax tree of a formula. It contains plain old data
+	 * without pointers and ownership. On common platforms it takes up only
+	 * 4 + 4*1 = 8 bytes.
+	 *
+	 * Even though all attributes are public and could be changed, you
+	 * shouldn't do that. The library may use certain internal assumptions
+	 * about the properties of operators it knows, and those it doesn't
+	 * know it can't process. Instead, the purpose of keeping the attributes
+	 * around publicly in every object is simplicity and having everything
+	 * available locally in the AST inside a Formula object.
 	 */
-	class Ast {
-	public:
+	struct Ast {
 		/**
-		 * Types of Ast nodes. These enum values are in 1-to-1 correspondence
-		 * with the subclasses of Ast.
-		 *
-		 * TODO: In the future, this may be removed in favor of `typeid`.
+		 * Types of Ast nodes.
 		 */
-		enum class Type {
-			Const, Var,
+		enum class Type : unsigned char {
+			Const = 0, Var,
 			Not, And, Or,
 			Impl, Eqv, Xor
 		};
 
+		Type type; /**< The node type. */
+
 		/**
-		 * Bitmasks for associativity.
+		 * Symolic names for arities.
 		 */
-		enum class Assoc {
-			Non   = 0x0,
-			Left  = 0x1,
-			Right = 0x2,
-			Both  = Left | Right
+		enum class Arity : unsigned char {
+			Leaf   = 0,
+			Unary  = 1,
+			Binary = 2
 		};
+
+		Arity arity; /**< The arity of this node. */
 
 		/**
 		 * Precedence numbers, the higher the tighter.
 		 */
-		enum class Prec {
+		enum class Prec : unsigned char {
 			Tight    = 20,
 			Symbolic = Tight,
 			Notish   = 14,
@@ -67,272 +71,85 @@ namespace Propcalc {
 			Loose    = 0
 		};
 
-		/** Return this node's Ast::Type. */
-		virtual Ast::Type  type(void)  const = 0;
-		/** Return this node's Ast::Assoc. */
-		virtual Ast::Assoc assoc(void) const = 0;
-		/** Return this node's Ast::Prec. */
-		virtual Ast::Prec  prec(void)  const = 0;
-
-		/** Whether two subtrees are recursively equal. */
-		virtual bool equals(const Ast& b) const = 0;
+		Prec prec; /**< The precedence of this node. */
 
 		/**
-		 * Evaluate the subtree rooted at this node on the given assignment.
-		 * If the assignment is undefined on a variable that is encountered
-		 * while evaluating, an std::out_of_range exception is thrown.
+		 * Bitmasks for associativity.
+		 */
+		enum class Assoc : unsigned char {
+			Non   = 0x0,
+			Left  = 0x1,
+			Right = 0x2,
+			Both  = Left | Right
+		};
+
+		Assoc assoc; /**< The associativity of this node. */
+
+		/**
+		 * Payload, if any.
+		 */
+		union {
+			bool value; /**< The value of a Const node. */
+			VarNr var;  /**< The VarNr of a Var node.   */
+		};
+
+		/**
+		 * Return a string representation of this node. Type::Const nodes
+		 * become "\T" or "\F", Type::Var stringify to their VarNr, and
+		 * the operator nodes have fixed string representations.
 		 *
-		 * Beware that evaluation of even a partially defined assignment
-		 * can succeed (is not guaranteed to throw an exception), because
-		 * conjunction, disjunction and implication short-circuit.
+		 * The caller may want to use its Domain object to get the name
+		 * of a variable node instead of a stringification of its number.
 		 */
-		virtual bool eval(const Assignment& assign) const = 0;
+		std::string to_string(void) const {
+			static std::string table[] = {
+				"C?", "V?", /* Const and Var are not tabulated */
+				"~", "&", "|", ">", "=", "^"
+			};
+			switch (type) {
+				case Type::Const:
+					return value ? "\\T" : "\\F";
+				case Type::Var:
+					return std::to_string(var);
+				case Type::Not:
+				case Type::And:
+				case Type::Or:
+				case Type::Impl:
+				case Type::Eqv:
+				case Type::Xor:
+					return table[(unsigned int) type];
+				default:
+					return "???"; /* silence compiler */
+			}
+		}
 
-		/**
-		 * Evaluate the subtree rooted at this node on the given (partial)
-		 * assignment. This has the effect of replacing all variables
-		 * defined in the assignment with their values and inductively
-		 * simplifying the AST nodes involving constants. The resulting
-		 * formula is either a sole constant or does not have any constant
-		 * nodes or variable nodes referred to in the assignment anymore.
-		 */
-		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const = 0;
-
-		/** Convert subtree to infix. */
-		virtual std::string to_infix(void)   const = 0;
-		/** Convert subtree to prefix (polish notation). */
-		virtual std::string to_prefix(void)  const = 0;
-		/** Convert subtree to postfix (reverse polish notation). */
-		virtual std::string to_postfix(void) const = 0;
-
-		class Const;
-		class Var;
-		class Not;
-		class And;
-		class Or;
-		class Impl;
-		class Eqv;
-		class Xor;
+		bool operator==(const Ast& rhs) const {
+			bool res =
+				type  == rhs.type  &&
+				arity == rhs.arity &&
+				prec  == rhs.prec  &&
+				assoc == rhs.assoc;
+			if (type == Ast::Type::Const)
+				res &= value == rhs.value;
+			else if (type == Ast::Type::Var)
+				res &= var == rhs.var;
+			return res;
+		}
 	};
+}
 
-	class Ast::Const : public Ast {
-	public:
-		bool value;
+namespace std {
 
-		Const(bool value) : value(value) { }
+template<>
+struct hash<Propcalc::Ast> {
+	size_t operator()(const Propcalc::Ast& ast) const {
+		return ((size_t) ast.var  << 16)
+			 | ((size_t) ast.prec << 8)
+			 | ((size_t) ast.type << 4)
+			 | ((size_t) ast.assoc);
+	}
+};
 
-		virtual Ast::Type  type(void)  const { return Ast::Type::Const;    }
-		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Non;     }
-		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Symbolic; }
-
-		virtual bool equals(const Ast& b) const {
-			if (b.type() != Ast::Type::Const)
-				return false;
-			return static_cast<const Ast::Const&>(b).value == value;
-		}
-
-		virtual bool eval(const Assignment&) const { return value; }
-		virtual std::shared_ptr<Ast> simplify(const Assignment&) const {
-			return std::make_shared<Ast::Const>(value);
-		}
-
-		virtual std::string to_string(void)  const { return value ? "\\T" : "\\F"; }
-		virtual std::string to_infix(void)   const { return this->to_string(); }
-		virtual std::string to_prefix(void)  const { return this->to_string(); }
-		virtual std::string to_postfix(void) const { return this->to_string(); }
-	};
-
-	class Ast::Var : public Ast {
-	public:
-		VarRef var;
-
-		Var(VarRef var) : var(var) { }
-
-		virtual Ast::Type  type(void)  const { return Ast::Type::Var;      }
-		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Non;     }
-		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Symbolic; }
-
-		virtual bool equals(const Ast& b) const {
-			if (b.type() != Ast::Type::Var)
-				return false;
-			return static_cast<const Ast::Var&>(b).var == var;
-		}
-
-		virtual bool eval(const Assignment& assign) const { return assign[var]; }
-
-		/* TODO: the way this is designed makes sharing nodes hard.
-		 * We don't do this at the moment and always allocate. */
-		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const {
-			if (assign.exists(var))
-				return std::make_shared<Ast::Const>(assign[var]);
-			return std::make_shared<Ast::Var>(var);
-		}
-
-		virtual std::string to_string(void)  const { return var->to_string(); }
-		virtual std::string to_infix(void)   const { return var->to_string(); }
-		virtual std::string to_prefix(void)  const { return var->to_string(); }
-		virtual std::string to_postfix(void) const { return var->to_string(); }
-	};
-
-	class Ast::Not : public Ast {
-	public:
-		std::shared_ptr<Ast> rhs;
-
-		Not(std::shared_ptr<Ast> rhs) : rhs(rhs) { }
-
-		virtual Ast::Type  type(void)  const { return Ast::Type::Not;    }
-		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Non;   }
-		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Notish; }
-
-		virtual bool equals(const Ast& b) const {
-			if (b.type() != Ast::Type::Not)
-				return false;
-			return rhs->equals(*static_cast<const Ast::Not&>(b).rhs);
-		}
-
-		virtual bool eval(const Assignment& assign) const { return ! rhs->eval(assign); }
-
-		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const;
-
-		virtual std::string to_infix(void)   const;
-		virtual std::string to_prefix(void)  const;
-		virtual std::string to_postfix(void) const;
-	};
-
-	class Ast::And : public Ast {
-	public:
-		std::shared_ptr<Ast> lhs;
-		std::shared_ptr<Ast> rhs;
-
-		And(std::shared_ptr<Ast> lhs, std::shared_ptr<Ast> rhs) : lhs(lhs), rhs(rhs) { }
-
-		virtual Ast::Type  type(void)  const { return Ast::Type::And;    }
-		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both;  }
-		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Andish; }
-
-		virtual bool equals(const Ast& b) const {
-			if (b.type() != Ast::Type::And)
-				return false;
-			return lhs->equals(*static_cast<const Ast::And&>(b).lhs)
-			    && rhs->equals(*static_cast<const Ast::And&>(b).rhs);
-		}
-
-		virtual bool eval(const Assignment& assign) const { return lhs->eval(assign) && rhs->eval(assign); }
-
-		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const;
-
-		virtual std::string to_infix(void)   const;
-		virtual std::string to_prefix(void)  const;
-		virtual std::string to_postfix(void) const;
-	};
-
-	class Ast::Or : public Ast {
-	public:
-		std::shared_ptr<Ast> lhs;
-		std::shared_ptr<Ast> rhs;
-
-		Or(std::shared_ptr<Ast> lhs, std::shared_ptr<Ast> rhs) : lhs(lhs), rhs(rhs) { }
-
-		virtual Ast::Type  type(void)  const { return Ast::Type::Or;    }
-		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both; }
-		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Orish; }
-
-		virtual bool equals(const Ast& b) const {
-			if (b.type() != Ast::Type::Or)
-				return false;
-			return lhs->equals(*static_cast<const Ast::Or&>(b).lhs)
-			    && rhs->equals(*static_cast<const Ast::Or&>(b).rhs);
-		}
-
-		virtual bool eval(const Assignment& assign) const { return lhs->eval(assign) || rhs->eval(assign); }
-
-		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const;
-
-		virtual std::string to_infix(void)   const;
-		virtual std::string to_prefix(void)  const;
-		virtual std::string to_postfix(void) const;
-	};
-
-	class Ast::Impl : public Ast {
-	public:
-		std::shared_ptr<Ast> lhs;
-		std::shared_ptr<Ast> rhs;
-
-		Impl(std::shared_ptr<Ast> lhs, std::shared_ptr<Ast> rhs) : lhs(lhs), rhs(rhs) { }
-
-		virtual Ast::Type  type(void)  const { return Ast::Type::Impl;    }
-		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Right;  }
-		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Implish; }
-
-		virtual bool equals(const Ast& b) const {
-			if (b.type() != Ast::Type::Impl)
-				return false;
-			return lhs->equals(*static_cast<const Ast::Impl&>(b).lhs)
-			    && rhs->equals(*static_cast<const Ast::Impl&>(b).rhs);
-		}
-
-		virtual bool eval(const Assignment& assign) const { return !lhs->eval(assign) || rhs->eval(assign); }
-
-		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const;
-
-		virtual std::string to_infix(void)   const;
-		virtual std::string to_prefix(void)  const;
-		virtual std::string to_postfix(void) const;
-	};
-
-	class Ast::Eqv : public Ast {
-	public:
-		std::shared_ptr<Ast> lhs;
-		std::shared_ptr<Ast> rhs;
-
-		Eqv(std::shared_ptr<Ast> lhs, std::shared_ptr<Ast> rhs) : lhs(lhs), rhs(rhs) { }
-
-		virtual Ast::Type  type(void)  const { return Ast::Type::Eqv;    }
-		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both;  }
-		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Eqvish; }
-
-		virtual bool equals(const Ast& b) const {
-			if (b.type() != Ast::Type::Eqv)
-				return false;
-			return lhs->equals(*static_cast<const Ast::Eqv&>(b).lhs)
-			    && rhs->equals(*static_cast<const Ast::Eqv&>(b).rhs);
-		}
-
-		virtual bool eval(const Assignment& assign) const { return lhs->eval(assign) == rhs->eval(assign); }
-
-		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const;
-
-		virtual std::string to_infix(void)   const;
-		virtual std::string to_prefix(void)  const;
-		virtual std::string to_postfix(void) const;
-	};
-
-	class Ast::Xor : public Ast {
-	public:
-		std::shared_ptr<Ast> lhs;
-		std::shared_ptr<Ast> rhs;
-
-		Xor(std::shared_ptr<Ast> lhs, std::shared_ptr<Ast> rhs) : lhs(lhs), rhs(rhs) { }
-
-		virtual Ast::Type  type(void)  const { return Ast::Type::Xor;    }
-		virtual Ast::Assoc assoc(void) const { return Ast::Assoc::Both;  }
-		virtual Ast::Prec  prec(void)  const { return Ast::Prec::Xorish; }
-
-		virtual bool equals(const Ast& b) const {
-			if (b.type() != Ast::Type::Xor)
-				return false;
-			return lhs->equals(*static_cast<const Ast::Xor&>(b).lhs)
-			    && rhs->equals(*static_cast<const Ast::Xor&>(b).rhs);
-		}
-
-		virtual bool eval(const Assignment& assign) const { return lhs->eval(assign) != rhs->eval(assign); }
-
-		virtual std::shared_ptr<Ast> simplify(const Assignment& assign) const;
-
-		virtual std::string to_infix(void)   const;
-		virtual std::string to_prefix(void)  const;
-		virtual std::string to_postfix(void) const;
-	};
 }
 
 #endif /* PROPCALC_AST_HPP */

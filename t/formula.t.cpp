@@ -287,7 +287,7 @@ int main(void) {
 
 	is(fm.simplify(Assignment({{ x, false }})).to_postfix(),
 		"\\T", "implication simplifies to true");
-	is(fm.eval(Assignment({{ x, false }})),
+	is(fm.EVAL(Assignment({{ x, false }})),
 		true, "implication evals to true (short-circuit)");
 	is(fm.eval(Assignment({{ x, true }, { y, true }, { z, false }})),
 		false, "unsatisfying assignment (long-circuit)");
@@ -303,7 +303,7 @@ int main(void) {
 	is(Formula("~a").truthtable().cache().size(), 2,
 		"~a has 2 rows in truthtable");
 	is(Formula("(a|b)^(a>c)=(~a&(a|b|x))").truthtable().cache().size(), 16,
-		"(a|b)^(a>c)=(~a&(a|b|x)) has 16 row in truthtable");
+		"(a|b)^(a>c)=(~a&(a|b|x)) has 16 rows in truthtable");
 
 	SUBTEST("truthtable") {
 		plan(std::size(ttfms));

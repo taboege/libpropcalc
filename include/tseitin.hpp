@@ -33,38 +33,68 @@ namespace Propcalc {
 	 * formula.
 	 *
 	 * The Tseitin transform algorithm assigns a new variable to each
-	 * node in the AST of the formula. For this reason, the domain of
-	 * the Clause objects returned by this stream is different from the
+	 * subformula of the formula. For this reason, the domain of the
+	 * Clause objects returned by this stream is different from the
 	 * original formula. It is an instance of Tseitin::Domain which
-	 * can be obtained from Tseitin::get_domain() and which allows to
-	 * look up Tseitin::Variable objects by their AST node in the
-	 * original formula. Conversel, the variable objects also store
-	 * an std::shared_ptr to the AST node.
+	 * is available as Tseitin::domain and which allows to look up
+	 * Tseitin::Variable objects by their subformula's root. Conversely,
+	 * the variable objects also store their subformula root.
+	 *
+	 * The original formula must not be destroyed while any of these
+	 * objects are still in use.
 	 */
 	class Tseitin : public Stream<Clause> {
 		class Variable : public Propcalc::Variable {
 		public:
-			std::shared_ptr<Ast> ast;
+			const Formula& fm;
+			unsigned int root;
 
-			Variable(std::shared_ptr<Ast> ast) :
-				/* XXX: This may be too costly for people who use the
-				 * Tseitin transform because it is fast. */
-				Propcalc::Variable("Tseitin[" + ast->to_infix() + "]"),
-				ast(ast)
+			Variable(const Formula& fm, unsigned int root) :
+				/* XXX: Computing the infix stringification is very costly
+				 * but nice for debugging. This could be sped up by moving
+				 * to_infix() code to Formula::iterator. */
+				Propcalc::Variable("Tseitin[" + fm.begin(root).materialize().to_infix() + "]"),
+				fm(fm),
+				root(root)
 			{ }
 		};
 
 		class Domain : public Cache {
 		private:
-			std::unordered_map<std::shared_ptr<Ast>, VarRef> astcache;
+			const Formula& fm;
+			/* TODO: This is also time-consuming and memory-hungry but we have
+			 * to ensure that equal subformulas of fm are mapped to the same
+			 * Tseitin::Variable. */
+			std::unordered_map<Formula, VarRef> subcache;
 
 		public:
-			VarRef get(std::shared_ptr<Ast> ast);
+			Domain(const Formula& fm) : fm(fm) { }
+
+			VarRef get(unsigned int root) {
+				const std::lock_guard<std::mutex> lock(access);
+
+				VarRef var;
+				auto subfm = fm.begin(root).materialize();
+				auto it = subcache.find(subfm);
+				if (it != subcache.end()) {
+					var = it->second;
+				}
+				else {
+					auto uvar = std::make_unique<Tseitin::Variable>(fm, root);
+					std::tie(std::ignore, var) = put_variable(std::move(uvar));
+					subcache.insert({ subfm, var });
+				}
+				return var;
+			}
+
+			VarRef get(Formula::iterator it) {
+				return get(it.current);
+			}
 		};
 
 		Formula fm;
-		std::shared_ptr<Tseitin::Domain> vars;
-		std::queue<std::shared_ptr<Ast>> queue;
+		unsigned int index;
+		std::unique_ptr<Tseitin::Domain> vars;
 		std::queue<std::unique_ptr<Clause>> clauses;
 		std::unique_ptr<Clause> last;
 		/* Whether the iterator is valid, i.e. last was populated with
@@ -82,7 +112,10 @@ namespace Propcalc {
 
 			for (auto& v : vars->list()) {
 				auto tv = static_cast<const Tseitin::Variable*>(v);
-				lassign[v] = tv->ast->eval(assign);
+				// TODO: Do not materialize here!
+				// I think eval, simplify, to_*fix should work on either
+				// the Formula.pn or Formula::iterator.
+				lassign[v] = fm.begin(tv->root).materialize().eval(assign);
 			}
 			return lassign;
 		}
@@ -93,9 +126,9 @@ namespace Propcalc {
 
 			for (auto& v : vars->list()) {
 				auto tv = static_cast<const Tseitin::Variable*>(v);
-				if (tv->ast->type() != Ast::Type::Var)
+				if (fm.pn[tv->root].type != Ast::Type::Var)
 					continue;
-				auto w = static_cast<const Ast::Var*>(tv->ast.get())->var;
+				auto w = fm.domain->unpack(fm.pn[tv->root].var);
 				assign[w] = lassign[v];
 			}
 

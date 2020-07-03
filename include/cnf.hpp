@@ -36,9 +36,9 @@ namespace Propcalc {
 	 * assignment becomes one clause forbidding that assignment.
 	 */
 	class CNF : public Stream<Clause> {
-		Formula fm;
-		std::queue<std::shared_ptr<Ast>> queue;
-		std::shared_ptr<Ast> current = nullptr;
+		Formula::iterator it, endit;
+		bool tabulating;
+		Formula cur;
 		Assignment last;
 		Clause cl;
 
@@ -46,7 +46,7 @@ namespace Propcalc {
 		CNF(const Formula& fm);
 
 		operator bool(void) const {
-			return queue.size() > 0 || current != nullptr;
+			return it != endit || tabulating;
 		}
 
 		Clause operator*(void) const {

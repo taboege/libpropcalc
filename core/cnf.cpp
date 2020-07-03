@@ -18,39 +18,37 @@ using namespace std;
 
 namespace Propcalc {
 
-CNF::CNF(const Formula& fm) : fm(fm) {
-	/* Skip all And nodes at the root, recursively. These just
-	 * tell us to concatenate the clauses of the maximal subtrees
-	 * without an And at the root. This way, the truthtables
-	 * of subtrees are smaller. */
-	queue.push(fm.root);
-	while (queue.front()->type() == Ast::Type::And) {
-		Ast::And* v = static_cast<Ast::And*>(queue.front().get());
-		queue.pop();
-		queue.push(v->lhs);
-		queue.push(v->rhs);
-	}
+CNF::CNF(const Formula& fm) : cur(fm) {
+	it = fm.begin();
+	endit = fm.end();
+	tabulating = false;
 	++*this; /* forward to the first clause */
 }
 
 CNF& CNF::operator++(void) {
 	while (true) {
-		if (!current) {
-			if (queue.size() == 0)
+		if (not tabulating) {
+			/* Skip all And nodes at the root, recursively. These just
+			 * tell us to concatenate the clauses of the maximal subtrees
+			 * without an And at the root. This way, the truthtables
+			 * of subtrees are smaller. */
+			while (it != endit && (*it).type == Ast::Type::And)
+				++it;
+			if (it == endit)
 				break; /* no more clauses */
-			current = queue.front();
-			queue.pop();
-			last = Assignment(Formula(current, fm.domain).vars());
+			tabulating = true;
+			cur = it.materialize();
+			last = cur.assignment();
 		}
 		else {
 			++last;
 			if (last.overflown()) {
-				current = nullptr;
+				tabulating = false;
 				continue;
 			}
 		}
 
-		if (!current->eval(last)) {
+		if (!cur.eval(last)) {
 			cl = ~last;
 			break; /* found the next clause */
 		}

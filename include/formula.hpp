@@ -1,5 +1,5 @@
 /*
- * formula.hpp - Formula class, parser
+ * formula.hpp - Formula, subformulas, parser
  *
  * Copyright (C) 2019-2020 Tobias Boege
  *
@@ -17,6 +17,7 @@
 
 #include <queue>
 #include <memory>
+#include <vector>
 #include <stdexcept>
 
 #include <propcalc/ast.hpp>
@@ -60,15 +61,32 @@ namespace Propcalc {
 	class CNF;
 
 	/**
-	 * A Formula object represents a memory-managed formula. It consists
-	 * of a shared_ptr to the root AST node and to a Domain object which
-	 * the internals consult when they need information about variables
-	 * appearing in the formula.
+	 * A Formula object represents a (memory-managed) formula. It consists
+	 * of a vector of Ast objects for the formula in polish notation and a
+	 * pointer to a Domain object which the internals consult when they need
+	 * information about variables appearing in the formula. The Domain must
+	 * be owned externally and outlive the formula.
 	 */
 	class Formula {
+		/* Prefer to stringify Type::Var nodes as their names instead of
+		 * their numbers. */
+		std::string to_string(Ast ast) const {
+			if (ast.type == Ast::Type::Var)
+				return domain->unpack(ast.var)->to_string();
+			return ast.to_string();
+		}
+
+		/* Recursive versions of eval and simplify. */
+		bool EVAL(const Assignment& assign, unsigned int root) const;
+		std::vector<Ast> SIMPLIFY(const Assignment& assign, unsigned int root = 0) const;
+
+		std::vector<Ast> SIMPLIFY(const Assignment& assign, const std::vector<Ast>& pn2) const {
+			return Formula(pn2, domain).SIMPLIFY(assign);
+		}
+
 	public:
-		Domain* domain;
-		std::shared_ptr<Ast> root;
+		Domain* domain;      /**< The formula's domain (externally owned).  */
+		std::vector<Ast> pn; /**< Preorder ("polish") traversal of the AST. */
 
 		/**
 		 * DefaultDomain is the default global domain for variables used
@@ -80,11 +98,11 @@ namespace Propcalc {
 		 * Parse a formula in infix form.
 		 *
 		 * The parser accepts any well-formed formula in propositional
-		 * calculus and turns it into an AST. The notion of well-formedness
-		 * is standard (constants and variables are atomic terms,
-		 * atomic terms are terms, terms can be combined with operators,
-		 * parentheses may be used). A formula may *not* produce an
-		 * empty AST.
+		 * calculus and turns it into a preorder traversal of its AST.
+		 * The notion of well-formedness is standard (constants and variables
+		 * are atomic terms, atomic terms are terms, terms can be combined
+		 * with operators, parentheses may be used). A formula may *not*
+		 * produce an empty AST.
 		 *
 		 * Except inside of atomic tokens like variable names or operators,
 		 * whitespace is insignificant.
@@ -107,7 +125,7 @@ namespace Propcalc {
 		 * precedence.
 		 *
 		 * All binary operators except for implication are associative,
-		 * implication is by convention *right*-associative.  When parsing
+		 * implication is by convention *right*-associative. When parsing
 		 * formulas (in infix form), the parser assembles an AST where all
 		 * chained operators associate to the right, i.e. `a & b & c`
 		 * would parse as `a & (b & c)` and produce this AST:
@@ -131,7 +149,7 @@ namespace Propcalc {
 		 * The constants *true* and *false* can be encoded as `\T` and `\F`.
 		 * Mind the leading backslash to distinguish them from variables.
 		 *
-		 * ## Compatibility with sagemath's propcalc
+		 * ## On incompatibility with sagemath's propcalc
 		 *
 		 * This library is developed as a replacement for the propcalc
 		 * package of sagemath, but even the formula parser is not 100%
@@ -165,18 +183,18 @@ namespace Propcalc {
 		 */
 		Formula(const std::string& fm, Domain* domain = &DefaultDomain);
 
-		/** Wrap existing AST in a formula. */
-		Formula(std::shared_ptr<Ast> root, Domain* domain = &DefaultDomain) :
+		/** Wrap existing AST (polish notation) in a formula. */
+		Formula(std::vector<Ast> pn, Domain* domain = &DefaultDomain) :
 			domain(domain),
-			root(root)
+			pn(pn)
 		{ }
 
 		/**
 		 * Convert a Clause into a Formula. Returns a Formula which is a
 		 * disjunction of positive or negative variables. If the clause is
-		 * empty, the formula consists of a single Ast::Const node, which
-		 * is false (false being the identity element with respect to
-		 * disjunction).
+		 * empty, the formula consists of a single Ast::Type::Const node,
+		 * which is false (false being the identity element with respect
+		 * to disjunction).
 		 */
 		Formula(Clause& cl, Domain* domain);
 
@@ -184,11 +202,148 @@ namespace Propcalc {
 		 * Convert a stream of Clause objects into a Formula. Returns a Formula
 		 * which is a conjunction of the formulas returned by the Formula
 		 * constructor applied to an individual clause. If the Stream has no
-		 * element, the constructed formula consists of a single Ast::Const
+		 * element, the constructed formula consists of a single Ast::Type::Const
 		 * node, which is true (true being the identity element with respect
 		 * to conjunction).
 		 */
 		Formula(Stream<Clause>& clauses, Domain* domain);
+
+		/**
+		 * Iterator for the AST nodes in a formula or a subformula. It is
+		 * initialized with a pointer to the vector storing the AST nodes
+		 * of the backing formula, an index pointing at the root of a sub-
+		 * formula and a balance of -1. At any point during the iteration,
+		 * balance is the "need" for operands in order to complete the
+		 * subformula.
+		 * 
+		 * The subformula is completed once balance is zero for the first
+		 * time. The balance can be updated (bidirectionally) according to
+		 * the AST node's arity.
+		 *
+		 * The end iterator is a sentinel that checks whether the balance
+		 * is zero.
+		 */
+		class iterator {
+			const std::vector<Ast>* pn;
+			Domain* domain = nullptr;
+
+		public:
+			using iterator_category = std::bidirectional_iterator_tag;
+			using value_type = Ast;
+			using difference_type = std::ptrdiff_t;
+			using pointer = Ast*;
+			using reference = Ast&;
+
+			unsigned int current;
+			int balance = -1;
+
+			iterator(const Formula& fm, unsigned int root = 0) : pn(&fm.pn), domain(fm.domain), current(root) { }
+			iterator(const std::vector<Ast>* pn, Domain* domain, unsigned int root) : pn(pn), domain(domain), current(root) { }
+			iterator(void) : pn(nullptr), current(0), balance(0) { }
+
+			template<typename I>
+			bool operator!=(I b) const {
+				if (!b.pn)
+					return balance != 0;
+				return pn != b.pn || current != b.current;
+			}
+
+			template<typename I>
+			bool operator==(I b) const {
+				if (!b.pn)
+					return balance == 0;
+				return pn == b.pn && current == b.current;
+			}
+
+			Ast operator*(void) const {
+				return (*pn)[current];
+			}
+
+			const Ast* operator->(void) const {
+				return &(*pn)[current];
+			}
+
+			iterator& operator++(void) {
+				/* Update: subtract (arity - 1) from the balance. This means
+				 * that the node we just processed gives us one term, but
+				 * requires arity terms to do so. */
+				int need = -1 + (int) (*pn)[current].arity;
+				balance -= need;
+				++current;
+				return *this;
+			}
+
+			iterator& operator--(void) {
+				/* Undo the update above. */
+				--current;
+				int need = -1 + (int) (*pn)[current].arity;
+				balance += need;
+				return *this;
+			}
+
+			/**
+			 * Create a new iterator for the subformula rooted at the
+			 * current node. It will use the same formula, have the same
+			 * root as the current element but the default balance of -1
+			 * making it only iterate the current subtree.
+			 */
+			iterator sub(void) {
+				return iterator(pn, domain, current);
+			}
+
+			/**
+			 * Return a list of operands. Afterwards, the iterator points
+			 * to the node following the current one, or at the end.
+			 */
+			std::vector<iterator> operands(void) {
+				std::vector<iterator> res;
+				int need = -(int) (**this).arity;
+				for (++*this; balance; ++*this) {
+					/* Operands are those nodes before which balance is
+					 * the current number of nodes still needed by the
+					 * root. At the beginning that is -arity and that
+					 * number gets incremented every time an operand is
+					 * found. */
+					if (balance == need) {
+						res.push_back(sub());
+						++need;
+					}
+				}
+				return res;
+			}
+
+			/**
+			 * Create an independent Formula object from the subformula
+			 * rooted at the iterator's current node. Afterwards, the
+			 * iterator points to the following node (in-order), or to
+			 * the end.
+			 */
+			Formula materialize(void) {
+				std::vector<Ast> pn;
+				/* End of the subformula is characterized by the first
+				 * node where balance becomes current balance + 1. */
+				for (auto end = balance + 1; balance != end; ++*this)
+					pn.push_back(**this);
+				return Formula(pn, domain);
+			}
+		};
+
+		/** Create a new iterator for the AST nodes of this subformula. */
+		iterator begin(unsigned int root = 0) const {
+			return iterator(*this, root);
+		}
+
+		/** Return a sentinel end iterator. */
+		iterator end(void) const {
+			return iterator();
+		}
+
+
+		/**
+		 * Return all variable numbers appearing in the formula in the order
+		 * in which they appear.
+		 */
+		std::vector<VarNr> varnrs(void) const;
 
 		/**
 		 * Return all variables appearing in the formula sorted in ascending
@@ -197,24 +352,42 @@ namespace Propcalc {
 		std::vector<VarRef> vars(void) const;
 
 		/** Return an empty assignment */
-		Assignment assignment(void) const {
-			return Assignment(vars());
+		Assignment assignment(void) const { return Assignment(vars()); }
+
+		/**
+		 * Evaluate the formula on the given assignment. If the assignment
+		 * is undefined on a variable that is encountered while evaluating,
+		 * an std::out_of_range exception is thrown.
+		 */
+		bool eval(const Assignment& assign) const;
+
+		/**
+		 * Evaluate the formula on the given assignment. If the assignment
+		 * is undefined on a variable that is encountered while evaluating,
+		 * an std::out_of_range exception is thrown.
+		 *
+		 * Unlike eval, the evaluation of even a partially defined assignment
+		 * can succeed (is not guaranteed to throw an exception), because
+		 * conjunction, disjunction and implication short-circuit in the
+		 * implementation of this method.
+		 */
+		bool EVAL(const Assignment& assign) const {
+			return EVAL(assign, 0);
 		}
 
 		/**
-		 * Evaluate the root Ast node on the assignment. The same comments
-		 * apply.
-		 */
-		bool eval(const Assignment& assign) const { return root->eval(assign); }
-
-		/**
-		 * Partially evaluate the root Ast node on the (partial) assignment.
-		 * Without an assignment, the empty assignment is used. The same
-		 * comments as for Ast::simplify apply.
+		 * Evaluate the formula on the given (partial) assignment. This has
+		 * the effect of replacing all variables defined in the assignment
+		 * with their values and inductively simplifying the AST nodes
+		 * involving constants. The resulting formula is either a sole
+		 * constant or does not have any constant nodes or variable nodes
+		 * referred to in the assignment anymore.
+		 *
+		 * Without an assignment, the empty assignment is used.
 		 */
 		Formula simplify(void) const { return simplify(Assignment()); }
 		Formula simplify(const Assignment& assign) const {
-			return Formula(root->simplify(assign), domain);
+			return Formula(SIMPLIFY(assign, 0), domain);
 		}
 
 		/** Return a Truthtable stream for the formula. */
@@ -224,12 +397,15 @@ namespace Propcalc {
 		/** Return a CNF stream for the formula. */
 		CNF        cnf(void)        const;
 
-		/** Return an infix stringification of the formula using a minimal amount of parenthesis. */
-		std::string to_infix(void)   const { return root->to_infix();   }
-		/** Return the postfix (reverse polish notation) stringification of the formula. */
-		std::string to_prefix(void)  const { return root->to_prefix();  }
 		/** Return the prefix (polish notation) stringification of the formula. */
-		std::string to_postfix(void) const { return root->to_postfix(); }
+		std::string to_prefix(void)  const;
+		/** Return the postfix (reverse polish notation) stringification of the formula. */
+		std::string to_postfix(void) const;
+		/** Return an infix stringification of the formula using a minimal amount of parenthesis. */
+		std::string to_infix(void)   const;
+
+		/** Access the i-th AST node. */
+		Ast operator[](unsigned int i) const { return pn[i]; }
 
 		/** Construct a new formula negating this one. */
 		Formula operator~(void);
@@ -237,13 +413,35 @@ namespace Propcalc {
 		Formula operator&(const Formula& rhs);
 		/** Construct a new formula as the disjunction of this one and rhs. */
 		Formula operator|(const Formula& rhs);
-		/** Construct a new formula as the implication of this one and rhs. */
-		Formula operator>>(const Formula& rhs);
-		/** Construct a new formula as the equivalence of this one and rhs. */
-		Formula operator==(const Formula& rhs);
 		/** Construct a new formula as the exclusive-or of this one and rhs. */
 		Formula operator^(const Formula& rhs);
+
+		bool operator==(const Formula& rhs) const {
+			return domain == rhs.domain && pn == rhs.pn;
+		}
 	};
+}
+
+namespace std {
+
+template<class T>
+static inline void hash_combine(size_t& seed, T const& v);
+
+template<>
+struct hash<Propcalc::Formula> {
+	size_t operator()(const Propcalc::Formula& fm) const {
+		size_t seed = std::hash<Propcalc::Domain*>()(fm.domain);
+		for (auto ast : fm)
+			hash_combine(seed, std::hash<Propcalc::Ast>()(ast));
+		return seed;
+	}
+};
+
+template<class T>
+static inline void hash_combine(size_t& seed, T const& v) {
+	seed ^= std::hash<T>()(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
+
 }
 
 /* Complete the interface of Formula. */

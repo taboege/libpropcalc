@@ -76,8 +76,8 @@ int main(int argc, char* argv[]) {
 	cout << fm.to_postfix() << endl;
 	cout << (~fm).to_postfix() << endl;
 	cout << ((fm & fm1) | fm2).to_postfix() << endl;
-	cout << (fm == fm1).to_postfix() << endl;
-	cout << (fm1 >> fm2).to_postfix() << endl;
+	//cout << (fm == fm1).to_postfix() << endl;
+	//cout << (fm1 >> fm2).to_postfix() << endl;
 	cout << endl;
 
 	cout << (fm1 | ~fm3).to_infix() << endl;
