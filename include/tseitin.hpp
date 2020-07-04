@@ -71,6 +71,8 @@ namespace Propcalc {
 		 * a new Assignment when operator++ last ran. */
 		bool valid;
 
+		void populate_variables(std::shared_ptr<Ast> root);
+
 	public:
 		Propcalc::Domain* domain; /* = vars.get() */
 

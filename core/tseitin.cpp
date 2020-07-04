@@ -53,9 +53,44 @@ end:
 	return var;
 }
 
+void Tseitin::populate_variables(shared_ptr<Ast> root) {
+	vars->get(root);
+	switch (root->type()) {
+	case Ast::Type::Not:
+		populate_variables(static_cast<Ast::Not*>(root.get())->rhs);
+		break;
+	case Ast::Type::And:
+		populate_variables(static_cast<Ast::And*>(root.get())->lhs);
+		populate_variables(static_cast<Ast::And*>(root.get())->rhs);
+		break;
+	case Ast::Type::Or:
+		populate_variables(static_cast<Ast::Or*>(root.get())->lhs);
+		populate_variables(static_cast<Ast::Or*>(root.get())->rhs);
+		break;
+	case Ast::Type::Impl:
+		populate_variables(static_cast<Ast::Impl*>(root.get())->lhs);
+		populate_variables(static_cast<Ast::Impl*>(root.get())->rhs);
+		break;
+	case Ast::Type::Eqv:
+		populate_variables(static_cast<Ast::Eqv*>(root.get())->lhs);
+		populate_variables(static_cast<Ast::Eqv*>(root.get())->rhs);
+		break;
+	case Ast::Type::Xor:
+		populate_variables(static_cast<Ast::Xor*>(root.get())->lhs);
+		populate_variables(static_cast<Ast::Xor*>(root.get())->rhs);
+		break;
+	default:
+		/* nothing */
+		break;
+	}
+}
+
 Tseitin::Tseitin(const Formula& fm) : fm(fm) {
 	vars = std::make_shared<Tseitin::Domain>();
 	domain = vars.get();
+	/* Populate the Tseitin variable domain first so that
+	 * lift/project work as soon as the constructor ran. */
+	populate_variables(fm.root);
 	/* Require that the root node be true. */
 	clauses.push(make_clause({ {vars->get(fm.root), true} }));
 	/* Kick off recursive conversion of the AST structure

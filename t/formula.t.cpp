@@ -249,7 +249,7 @@ static bool is_eqv(const Formula& f, Tseitin& g, std::string message = "") {
 	/* Go over all assignments on the Tseitin domain. If the assignment is
 	 * consistent (the lift of its projection), then it must equal the value
 	 * of the original formula. Otherwise it must be false. */
-	g.cache_all(); /* FIXME: need all variables to lift and project */
+	g.is_caching() = true;
 	lassign = Assignment(g.domain->list());
 	while (!lassign.overflown()) {
 		assign = g.project(lassign);
