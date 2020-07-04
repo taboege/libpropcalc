@@ -166,7 +166,8 @@ int main(int argc, char* argv[]) {
 		auto cnf = fm.cnf();
 		cout << "Number of CNF clauses: " << count_stream(cnf) << endl;
 		cout << "Counting again:        " << count_stream(cnf) << endl;
-		auto cache = fm.cnf().cache();
+		auto cache = fm.cnf();
+		cache.is_caching() = true;
 		cout << "Number of CNF clauses (cached): " << count_stream(cache) << endl;
 		cout << "Counting again (cached):        " << count_stream(cache) << endl;
 	}

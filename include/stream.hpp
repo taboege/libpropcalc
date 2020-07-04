@@ -35,29 +35,58 @@ namespace Propcalc {
 	 * It should not be consumed concurrently.
 	 *
 	 * This is a virtual class demanding that implementations provide
-	 * overloads for `operator*` to get the current value, `operator++`
-	 * to (pre-)increment the stream to point to the next value, and
-	 * `operator bool` to return if the stream is valid and can be
-	 * dereferenced.
+	 * overloads for `operator++` to (pre-)increment the stream to point
+	 * to the next value, use the protected `produce` to make available
+	 * a new value, and `operator bool` to return if the stream is valid
+	 * and can be dereferenced.
+	 *
+	 * The produced values can be recorded in a cache by setting
+	 * is_caching() to true. A newly initialized iterator on a cached
+	 * stream will start at the beginning of the cache.
 	 */
 	template<typename T>
 	class Stream {
+		bool caching;
+		std::vector<T> cache;
+
+	protected:
+		T value;
+
+		/** Produce a new value. Use this to get caching to work. */
+		void produce(T v) {
+			if (caching)
+				cache.push_back(v);
+			value = v;
+		}
+
 	public:
 		/** Return the current element. */
-		virtual T operator*(void) const     = 0;
+		virtual T operator*(void) const { return value; };
 		/** Produce the next element. */
 		virtual Stream<T>& operator++(void) = 0;
 		/** Return if the stream points at a valid value. */
 		virtual operator bool(void) const   = 0;
 
 		class iterator;
-		class Cached;
+		friend class iterator;
 
-		virtual iterator begin(void) { return iterator(this); }
-		virtual iterator end(void)   { return iterator();     }
+		iterator begin(void) { return iterator(this); }
+		iterator end(void)   { return iterator();     }
 
-		/** Return a cached version of this stream. */
-		Cached cache(void) { return Cached(this); }
+		/** Tell whether the stream is currently caching. */
+		bool& is_caching(void) { return caching; }
+
+		/** Return the number of elements in the cache. */
+		size_t size(void) const { return cache.size(); }
+
+		/** Start caching and exhaust the stream. Return the number
+		 * of seen elements. */
+		size_t cache_all(void) {
+			is_caching() = true;
+			for (auto it = begin(), e = end(); it != e; ++it)
+				/* fills cache from afar */;
+			return size();
+		}
 	};
 
 	/**
@@ -68,6 +97,7 @@ namespace Propcalc {
 	template<typename T>
 	class Stream<T>::iterator {
 		Stream<T>* st;
+		unsigned int idx = 0;
 
 	public:
 		using iterator_category = std::forward_iterator_tag;
@@ -87,74 +117,22 @@ namespace Propcalc {
 		 */
 		bool operator!=(iterator& b) const {
 			if (!b.st)
-				return !!*st;
+				return idx < st->size() || !!*st;
 			throw X::Stream::Comparison();
 		}
 
 		T operator*(void) const {
+			if (idx < st->size())
+				return st->cache[idx];
 			return **st;
 		}
 
 		iterator& operator++(void) {
-			++*st;
+			if (idx < st->size())
+				++idx;
+			else
+				++*st;
 			return *this;
-		}
-	};
-
-	/**
-	 * A caching version of Stream<T>.
-	 *
-	 * This is the return value of Stream<T>::cache, an object implementing
-	 * the Stream<T> protocol which can in addition be reset and iterated
-	 * again. The price to pay for this is that a copy of the original
-	 * stream must be stored inside the Cached object.
-	 */
-	template<typename T>
-	class Stream<T>::Cached : public Stream<T> {
-		std::vector<T> cache;
-		unsigned int i = 0;
-
-	public:
-		/**
-		 * Construct a Cached version of the given stream. The constructor
-		 * already iterates the entire input stream and caches it.
-		 *
-		 * In the future, this object may instead store a copy of the input
-		 * stream and gradually cache its output.
-		 */
-		Cached(Stream<T>* st) {
-			for (auto c : *st)
-				cache.push_back(c);
-		}
-
-		operator bool(void) const {
-			return i < cache.size();
-		}
-
-		T operator*(void) const {
-			return cache[i];
-		}
-
-		Cached& operator++(void) {
-			++i;
-			return *this;
-		}
-
-		/** Return the number of elements in the cache. */
-		size_t size(void) const {
-			return cache.size();
-		}
-
-		/** Reset the stream pointer to the beginning.  */
-		Cached& reset(void) {
-			i = 0;
-			return *this;
-		}
-
-		/** Reset the stream and return an iterator to the beginning. */
-		virtual iterator begin(void) {
-			this->reset();
-			return iterator(this);
 		}
 	};
 }

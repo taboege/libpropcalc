@@ -106,10 +106,6 @@ namespace Propcalc {
 			return valid;
 		}
 
-		Clause operator*(void) const {
-			return *last;
-		}
-
 		Tseitin& operator++(void);
 	};
 }

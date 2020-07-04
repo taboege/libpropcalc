@@ -69,6 +69,7 @@ Tseitin& Tseitin::operator++(void) {
 		if (clauses.size() > 0) {
 			last = move(clauses.front());
 			clauses.pop();
+			produce(*last);
 			valid = true;
 			break; /* found the next clause */
 		}

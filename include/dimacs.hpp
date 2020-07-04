@@ -29,7 +29,6 @@ namespace Propcalc {
 		class In : public Stream<Clause> {
 			std::istream& in;
 			Domain* domain;
-			Clause last;
 
 		public:
 			In(std::istream& in, Domain* domain = new Cache) :
@@ -37,8 +36,7 @@ namespace Propcalc {
 				++*this; /* fast-forward to first clause */
 			}
 
-			Clause operator*(void) const { return last;      }
-			operator bool(void) const    { return !in.eof(); }
+			operator bool(void) const { return !in.eof(); }
 			In& operator++(void);
 		};
 
@@ -53,9 +51,9 @@ namespace Propcalc {
 				st(clauses), domain(domain)
 			{ }
 
-			operator bool(void) const   { return !!st;  }
+			operator bool(void)   const { return !!st;  }
 			Out& operator++(void) { ++st; return *this; }
-			std::string operator*(void) const;
+			std::string operator*(void);
 		};
 
 		struct Header {

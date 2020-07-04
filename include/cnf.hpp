@@ -40,17 +40,12 @@ namespace Propcalc {
 		std::queue<std::shared_ptr<Ast>> queue;
 		std::shared_ptr<Ast> current = nullptr;
 		Assignment last;
-		Clause cl;
 
 	public:
 		CNF(const Formula& fm);
 
 		operator bool(void) const {
 			return queue.size() > 0 || current != nullptr;
-		}
-
-		Clause operator*(void) const {
-			return cl;
 		}
 
 		CNF& operator++(void);

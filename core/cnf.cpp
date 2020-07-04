@@ -51,7 +51,7 @@ CNF& CNF::operator++(void) {
 		}
 
 		if (!current->eval(last)) {
-			cl = ~last;
+			produce(~last);
 			break; /* found the next clause */
 		}
 	}

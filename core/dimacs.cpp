@@ -51,7 +51,7 @@ DIMACS::In& DIMACS::In::operator++(void) {
 		if (starts_with(line, "c "))
 			continue;
 
-		last = Clause();
+		Clause last;
 		stringstream ss(line, ios_base::in);
 		while (!ss.eof()) {
 			long lit;
@@ -61,6 +61,7 @@ DIMACS::In& DIMACS::In::operator++(void) {
 			auto var = domain->unpack(abs(lit));
 			last[var] = lit > 0;
 		}
+		produce(last);
 		break;
 	}
 	return *this;
@@ -71,7 +72,7 @@ Formula DIMACS::read(istream& in, Domain* domain) {
 	return Formula(clauses, domain);
 }
 
-string DIMACS::Out::operator*(void) const {
+string DIMACS::Out::operator*(void) {
 	auto cl = *st;
 	string line;
 	for (auto& v : cl.vars()) {
@@ -81,19 +82,20 @@ string DIMACS::Out::operator*(void) const {
 		line += to_string(nr) + " ";
 	}
 	line += "0";
+	produce(line);
 	return line;
 }
 
 void DIMACS::write(ostream& out, Stream<Clause>& clauses, Domain* domain, vector<string> comments) {
-	auto cache = clauses.cache();
-	DIMACS::Header header{comments, 0, cache.size()};
-	for (auto cl : cache) {
+	size_t nclauses = clauses.cache_all();
+	DIMACS::Header header{comments, 0, nclauses};
+	for (auto cl : clauses) {
 		for (auto& v : cl.vars()) {
 			auto nr = domain->pack(v);
 			header.maxvar = max(header.maxvar, nr);
 		}
 	}
-	DIMACS::write(out, cache.reset(), domain, header);
+	DIMACS::write(out, clauses, domain, header);
 }
 
 void DIMACS::write(ostream& out, Stream<Clause>& clauses, Domain* domain, DIMACS::Header header) {

@@ -95,7 +95,8 @@ static bool is_truthtable(const Formula& f, std::vector<bool>& ttval, std::strin
 	if (message.empty())
 		message = f.to_postfix();
 
-	auto tt = f.truthtable().cache();
+	auto tt = f.truthtable();
+	tt.cache_all();
 	if (tt.size() != 1UL << f.vars().size()) {
 		fail(message);
 		diag("truthtable has ", tt.size(), " rows instead of ", 1UL << f.vars().size());
@@ -217,10 +218,10 @@ static bool is_eqv(const Formula& f, CNF& g, std::string message = "") {
 	if (message.empty())
 		message = f.to_postfix();
 
-	auto h = g.cache();
+	g.is_caching() = true;
 	assign = f.assignment();
 	while (!assign.overflown()) {
-		is_ok &= f.eval(assign) == clstream_eval(h, assign);
+		is_ok &= f.eval(assign) == clstream_eval(g, assign);
 		if (!is_ok)
 			break;
 		++assign;
@@ -228,10 +229,10 @@ static bool is_eqv(const Formula& f, CNF& g, std::string message = "") {
 
 	if (!ok(is_ok, message)) {
 		diag("mismatched at assignment ", assign);
-		diag("  Got:      ", clstream_eval(h, assign));
+		diag("  Got:      ", clstream_eval(g, assign));
 		diag("  Expected: ", f.eval(assign));
 		diag("CNF clauses:");
-		for (auto cl : h)
+		for (auto cl : g)
 			diag("  ", cl);
 	}
 	return is_ok;
@@ -245,17 +246,16 @@ static bool is_eqv(const Formula& f, Tseitin& g, std::string message = "") {
 	if (message.empty())
 		message = f.to_postfix();
 
-	auto h = g.cache();
-
 	/* Go over all assignments on the Tseitin domain. If the assignment is
 	 * consistent (the lift of its projection), then it must equal the value
 	 * of the original formula. Otherwise it must be false. */
+	g.cache_all(); /* FIXME: need all variables to lift and project */
 	lassign = Assignment(g.domain->list());
 	while (!lassign.overflown()) {
 		assign = g.project(lassign);
 		consistent = g.lift(assign) == lassign;
 		expected = consistent ? f.eval(assign) : false;
-		is_ok &= clstream_eval(h, lassign) == expected;
+		is_ok &= clstream_eval(g, lassign) == expected;
 		if (!is_ok)
 			break;
 		++lassign;
@@ -266,10 +266,10 @@ static bool is_eqv(const Formula& f, Tseitin& g, std::string message = "") {
 			diag("mismatched at consistent assignment ", assign);
 		else
 			diag("mismatched at inconsistent assignment ", lassign);
-		diag("  Got:      ", clstream_eval(h, lassign));
+		diag("  Got:      ", clstream_eval(g, lassign));
 		diag("  Expected: ", expected);
 		diag("Tseitin clauses:");
-		for (auto cl : h)
+		for (auto cl : g)
 			diag("  ", cl);
 	}
 	return is_ok;
@@ -296,14 +296,14 @@ int main(void) {
 		diag(fm.eval(Assignment({{ y, false }})) ? true : false);
 	}, "eval over undefined variable throws");
 
-	is(Formula("\\T").truthtable().cache().size(), 1,
+	is(Formula("\\T").truthtable().cache_all(), 1,
 		"\\T has 1 row in truthtable");
-	is(Formula("\\F").truthtable().cache().size(), 1,
+	is(Formula("\\F").truthtable().cache_all(), 1,
 		"\\F has 1 row in truthtable");
-	is(Formula("~a").truthtable().cache().size(), 2,
+	is(Formula("~a").truthtable().cache_all(), 2,
 		"~a has 2 rows in truthtable");
-	is(Formula("(a|b)^(a>c)=(~a&(a|b|x))").truthtable().cache().size(), 16,
-		"(a|b)^(a>c)=(~a&(a|b|x)) has 16 row in truthtable");
+	is(Formula("(a|b)^(a>c)=(~a&(a|b|x))").truthtable().cache_all(), 16,
+		"(a|b)^(a>c)=(~a&(a|b|x)) has 16 rows in truthtable");
 
 	SUBTEST("truthtable") {
 		plan(std::size(ttfms));
