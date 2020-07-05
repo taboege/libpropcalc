@@ -90,7 +90,7 @@ static auto ttvals = std::vector<std::vector<bool>>{
 static bool is_truthtable(const Formula& f, std::vector<bool>& ttval, std::string message = "") {
 	bool is_ok = true;
 	Assignment assign;
-	bool val;
+	bool val = false;
 
 	if (message.empty())
 		message = f.to_postfix();
@@ -222,7 +222,7 @@ static bool is_eqv(const Formula& f, CNF& g, std::string message = "") {
 
 static bool is_eqv(const Formula& f, Tseitin& g, std::string message = "") {
 	bool is_ok = true;
-	bool consistent, expected;
+	bool consistent = false, expected = false;
 	Assignment assign, lassign;
 
 	if (message.empty())
