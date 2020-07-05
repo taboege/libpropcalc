@@ -19,7 +19,7 @@
 #include <memory>
 #include <vector>
 
-#include <propcalc/variable.hpp>
+#include <propcalc/domain.hpp>
 #include <propcalc/assignment.hpp>
 
 namespace Propcalc {

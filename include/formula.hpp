@@ -20,7 +20,7 @@
 #include <stdexcept>
 
 #include <propcalc/ast.hpp>
-#include <propcalc/variable.hpp>
+#include <propcalc/domain.hpp>
 #include <propcalc/assignment.hpp>
 #include <propcalc/conjunctive.hpp>
 

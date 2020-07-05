@@ -17,7 +17,7 @@ add_compile_options(
 )
 
 add_library(propcalc SHARED
-	core/variable.cpp
+	core/domain.cpp
 	core/assignment.cpp
 	core/ast.cpp
 	core/formula.cpp

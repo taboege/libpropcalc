@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <propcalc/variable.hpp>
+#include <propcalc/domain.hpp>
 
 namespace Propcalc {
 	/**

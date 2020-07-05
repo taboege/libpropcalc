@@ -20,9 +20,9 @@
 #include <unordered_map>
 
 #include <propcalc/ast.hpp>
+#include <propcalc/domain.hpp>
 #include <propcalc/conjunctive.hpp>
 #include <propcalc/formula.hpp>
-#include <propcalc/variable.hpp>
 
 namespace Propcalc {
 	/**

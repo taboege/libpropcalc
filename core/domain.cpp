@@ -1,5 +1,5 @@
 /*
- * variable.cpp - Variable and Domain
+ * domain.cpp - Variable and Domain
  *
  * Copyright (C) 2019-2020 Tobias Boege
  *
@@ -15,7 +15,7 @@
 #include <memory>
 #include <mutex>
 
-#include <propcalc/variable.hpp>
+#include <propcalc/domain.hpp>
 
 using namespace std;
 

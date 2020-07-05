@@ -20,8 +20,8 @@
 #include <memory>
 
 #include <propcalc/stream.hpp>
+#include <propcalc/domain.hpp>
 #include <propcalc/conjunctive.hpp>
-#include <propcalc/variable.hpp>
 #include <propcalc/formula.hpp>
 
 namespace Propcalc {

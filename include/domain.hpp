@@ -1,5 +1,5 @@
 /*
- * variable.hpp - Variable and Domain
+ * domain.hpp - Variable and Domain
  *
  * Copyright (C) 2019-2020 Tobias Boege
  *
@@ -12,8 +12,8 @@
  * Artistic License 2.0 for more details.
  */
 
-#ifndef PROPCALC_VARIABLE_HPP
-#define PROPCALC_VARIABLE_HPP
+#ifndef PROPCALC_DOMAIN_HPP
+#define PROPCALC_DOMAIN_HPP
 
 #include <string>
 #include <memory>
@@ -181,4 +181,4 @@ namespace Propcalc {
 	};
 }
 
-#endif /* PROPCALC_VARIABLE_HPP */
+#endif /* PROPCALC_DOMAIN_HPP */
