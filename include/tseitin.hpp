@@ -20,8 +20,7 @@
 #include <unordered_map>
 
 #include <propcalc/ast.hpp>
-#include <propcalc/stream.hpp>
-#include <propcalc/clause.hpp>
+#include <propcalc/conjunctive.hpp>
 #include <propcalc/formula.hpp>
 #include <propcalc/variable.hpp>
 
@@ -41,7 +40,7 @@ namespace Propcalc {
 	 * original formula. Conversel, the variable objects also store
 	 * an std::shared_ptr to the AST node.
 	 */
-	class Tseitin : public Stream<Clause> {
+	class Tseitin : public Conjunctive {
 		class Variable : public Propcalc::Variable {
 		public:
 			std::shared_ptr<Ast> ast;

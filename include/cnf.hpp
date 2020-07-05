@@ -19,10 +19,9 @@
 #include <memory>
 
 #include <propcalc/ast.hpp>
-#include <propcalc/stream.hpp>
-#include <propcalc/clause.hpp>
-#include <propcalc/formula.hpp>
 #include <propcalc/assignment.hpp>
+#include <propcalc/conjunctive.hpp>
+#include <propcalc/formula.hpp>
 
 namespace Propcalc {
 	/**
@@ -35,7 +34,7 @@ namespace Propcalc {
 	 * truthtable of each child is enumerated: every non-satisfying
 	 * assignment becomes one clause forbidding that assignment.
 	 */
-	class CNF : public Stream<Clause> {
+	class CNF : public Conjunctive {
 		Formula fm;
 		std::queue<std::shared_ptr<Ast>> queue;
 		std::shared_ptr<Ast> current = nullptr;

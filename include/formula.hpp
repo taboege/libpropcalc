@@ -22,8 +22,7 @@
 #include <propcalc/ast.hpp>
 #include <propcalc/variable.hpp>
 #include <propcalc/assignment.hpp>
-#include <propcalc/clause.hpp>
-#include <propcalc/stream.hpp>
+#include <propcalc/conjunctive.hpp>
 
 namespace Propcalc {
 	namespace X::Formula {
@@ -181,14 +180,14 @@ namespace Propcalc {
 		Formula(Clause& cl, Domain* domain);
 
 		/**
-		 * Convert a stream of Clause objects into a Formula. Returns a Formula
-		 * which is a conjunction of the formulas returned by the Formula
-		 * constructor applied to an individual clause. If the Stream has no
-		 * element, the constructed formula consists of a single Ast::Const
-		 * node, which is true (true being the identity element with respect
-		 * to conjunction).
+		 * Convert a conjunctive stream of clauses into a Formula. Returns
+		 * a Formula which is a conjunction of the formulas returned by the
+		 * Formula constructor applied to an individual clause. If the
+		 * conjunctive has no element, the constructed formula consists of
+		 * a single Ast::Const node, which is true (true being the identity
+		 * element with respect to conjunction).
 		 */
-		Formula(Stream<Clause>& clauses, Domain* domain);
+		Formula(Conjunctive& clauses, Domain* domain);
 
 		/**
 		 * Return all variables appearing in the formula sorted in ascending
@@ -218,11 +217,11 @@ namespace Propcalc {
 		}
 
 		/** Return a Truthtable stream for the formula. */
-		Truthtable truthtable(void) const;
+		Truthtable truthtable(bool caching = false) const;
 		/** Return a Tseitin transform stream for the formula. */
-		Tseitin    tseitin(void)    const;
+		Tseitin    tseitin(bool caching = false) const;
 		/** Return a CNF stream for the formula. */
-		CNF        cnf(void)        const;
+		CNF        cnf(bool caching = false) const;
 
 		/** Return an infix stringification of the formula using a minimal amount of parenthesis. */
 		std::string to_infix(void)   const { return root->to_infix();   }

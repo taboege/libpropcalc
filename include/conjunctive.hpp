@@ -1,7 +1,7 @@
 /*
- * clause.hpp - Clause
+ * conjunctive.hpp - Clause and Conjunctive
  *
- * Copyright (C) 2019 Tobias Boege
+ * Copyright (C) 2019-2020 Tobias Boege
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the Artistic License 2.0
@@ -12,10 +12,11 @@
  * Artistic License 2.0 for more details.
  */
 
-#ifndef PROPCALC_CLAUSE_HPP
-#define PROPCALC_CLAUSE_HPP
+#ifndef PROPCALC_CONJUNCTIVE_HPP
+#define PROPCALC_CONJUNCTIVE_HPP
 
 #include <propcalc/assignment.hpp>
+#include <propcalc/stream.hpp>
 
 namespace Propcalc {
 	/**
@@ -44,6 +45,23 @@ namespace Propcalc {
 				neg[v] = !vmap.at(v);
 			return neg;
 		}
+
+		/**
+		 * Evaluate the Clause on an Assignment. This uses the natural partial
+		 * assignment semantics, that is when a variable in the assignment is
+		 * not mentioned in the clause, this fact is ignored. Such a variable
+		 * cannot make the clause true.
+		 *
+		 * In particular an empty clause always yields false (the identity
+		 * element with respect to disjunction).
+		 */
+		bool eval(const Assignment& assign) const {
+			for (auto v : assign.vars()) {
+				if (exists(v) && (*this)[v] == assign[v])
+					return true;
+			}
+			return false;
+		}
 	};
 
 	namespace {
@@ -55,6 +73,25 @@ namespace Propcalc {
 			return os << "}";
 		}
 	}
+
+	class Conjunctive : public Stream<Clause> {
+	public:
+		/**
+		 * Evaluate the conjunction of clauses enumerated. If there is no
+		 * clause, returns true (the identity element with respect to
+		 * conjunction), as all clauses are satisfied.
+		 *
+		 * If you want to evaluate the Conjunctive multiple times, it must
+		 * be put into caching mode before the first clause is iterated..
+		 */
+		bool eval(const Assignment& assign) {
+			for (auto cl : *this) {
+				if (!cl.eval(assign))
+					return false;
+			}
+			return true;
+		}
+	};
 }
 
-#endif /* PROPCALC_CLAUSE_HPP */
+#endif /* PROPCALC_CONJUNCTIVE_HPP */

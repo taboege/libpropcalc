@@ -41,8 +41,10 @@ namespace Propcalc {
 	 * and can be dereferenced.
 	 *
 	 * The produced values can be recorded in a cache by setting
-	 * is_caching() to true. A newly initialized iterator on a cached
-	 * stream will start at the beginning of the cache.
+	 * is_caching() to true. For this to be effective, the implementation
+	 * must pass newly produced values to the protected `produce` method.
+	 * A newly initialized iterator on a cached stream will start at the
+	 * beginning of the cache.
 	 */
 	template<typename T>
 	class Stream {

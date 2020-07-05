@@ -20,19 +20,21 @@
 #include <memory>
 
 #include <propcalc/stream.hpp>
-#include <propcalc/clause.hpp>
+#include <propcalc/conjunctive.hpp>
 #include <propcalc/variable.hpp>
 #include <propcalc/formula.hpp>
 
 namespace Propcalc {
 	namespace DIMACS {
-		class In : public Stream<Clause> {
+		class In : public Conjunctive {
 			std::istream& in;
 			Domain* domain;
 
 		public:
+			/* FIXME: default domain = new Cache doesn't seem exception-safe. */
 			In(std::istream& in, Domain* domain = new Cache) :
-				in(in), domain(domain) {
+					in(in), domain(domain)
+			{
 				++*this; /* fast-forward to first clause */
 			}
 
@@ -40,19 +42,20 @@ namespace Propcalc {
 			In& operator++(void);
 		};
 
+		/* FIXME: default domain = new Cache doesn't seem exception-safe. */
 		Formula read(std::istream& in, Domain* domain = new Cache);
 
 		class Out : public Stream<std::string> {
-			Stream<Clause>& st;
+			Conjunctive& clauses;
 			std::shared_ptr<Domain> domain;
 
 		public:
-			Out(Stream<Clause>& clauses, Domain* domain) :
-				st(clauses), domain(domain)
+			Out(Conjunctive& clauses, Domain* domain) :
+					clauses(clauses), domain(domain)
 			{ }
 
-			operator bool(void)   const { return !!st;  }
-			Out& operator++(void) { ++st; return *this; }
+			operator bool(void)   const { return !!clauses;  }
+			Out& operator++(void) { ++clauses; return *this; }
 			std::string operator*(void);
 		};
 
@@ -62,8 +65,8 @@ namespace Propcalc {
 			size_t nclauses;
 		};
 
-		void write(std::ostream& out, Stream<Clause>& clauses, Domain* domain, std::vector<std::string> comments = {});
-		void write(std::ostream& out, Stream<Clause>& clauses, Domain* domain, Header header);
+		void write(std::ostream& out, Conjunctive& clauses, Domain* domain, std::vector<std::string> comments = {});
+		void write(std::ostream& out, Conjunctive& clauses, Domain* domain, Header header);
 	}
 }
 

@@ -414,12 +414,14 @@ static shared_ptr<Ast> clause_ast(Clause& cl) {
 }
 
 Formula::Formula(Clause& cl, Domain* domain) :
-	domain(domain) {
+		domain(domain)
+{
 	root = clause_ast(cl);
 }
 
-Formula::Formula(Stream<Clause>& clauses, Domain* domain) :
-	domain(domain) {
+Formula::Formula(Conjunctive& clauses, Domain* domain) :
+		domain(domain)
+{
 	vector<shared_ptr<Ast>> cls;
 	for (auto cl : clauses)
 		cls.push_back(clause_ast(cl));
@@ -496,16 +498,22 @@ vector<VarRef> Formula::vars(void) const {
 	return domain->sort(pile);
 }
 
-Truthtable Formula::truthtable(void) const {
-	return Truthtable(*this);
+Truthtable Formula::truthtable(bool caching) const {
+	Truthtable t(*this);
+	t.is_caching() = caching;
+	return t;
 }
 
-Tseitin Formula::tseitin(void) const {
-	return Tseitin(*this);
+Tseitin Formula::tseitin(bool caching) const {
+	Tseitin t(*this);
+	t.is_caching() = caching;
+	return t;
 }
 
-CNF Formula::cnf(void) const {
-	return CNF(*this);
+CNF Formula::cnf(bool caching) const {
+	CNF c(*this);
+	c.is_caching() = caching;
+	return c;
 }
 
 Formula Formula::notf(void) const {

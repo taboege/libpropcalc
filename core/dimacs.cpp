@@ -73,7 +73,7 @@ Formula DIMACS::read(istream& in, Domain* domain) {
 }
 
 string DIMACS::Out::operator*(void) {
-	auto cl = *st;
+	auto cl = *clauses;
 	string line;
 	for (auto& v : cl.vars()) {
 		auto nr = static_cast<make_signed<VarNr>::type>(domain->pack(v));
@@ -86,7 +86,7 @@ string DIMACS::Out::operator*(void) {
 	return line;
 }
 
-void DIMACS::write(ostream& out, Stream<Clause>& clauses, Domain* domain, vector<string> comments) {
+void DIMACS::write(ostream& out, Conjunctive& clauses, Domain* domain, vector<string> comments) {
 	size_t nclauses = clauses.cache_all();
 	DIMACS::Header header{comments, 0, nclauses};
 	for (auto cl : clauses) {
@@ -98,7 +98,7 @@ void DIMACS::write(ostream& out, Stream<Clause>& clauses, Domain* domain, vector
 	DIMACS::write(out, clauses, domain, header);
 }
 
-void DIMACS::write(ostream& out, Stream<Clause>& clauses, Domain* domain, DIMACS::Header header) {
+void DIMACS::write(ostream& out, Conjunctive& clauses, Domain* domain, DIMACS::Header header) {
 	auto st = DIMACS::Out(clauses, domain);
 	for (auto& line : header.comments)
 		out << "c " << line << endl;

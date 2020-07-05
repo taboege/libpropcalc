@@ -193,24 +193,6 @@ static auto extrafms = std::vector<Formula>{
 	{"(ab&3 | x&a34) -> (\\T ^ x) -> (y = x) <-> (ab | cd ^ a34)"},
 };
 
-// TODO: This should be a method on Clause as soon as Clause is a real type.
-static bool clause_eval(const Clause& cl, const Assignment& assign) {
-	for (auto v : assign.vars()) {
-		if (cl.exists(v) && cl[v] == assign[v])
-			return true;
-	}
-	return false;
-}
-
-// TODO: This could be a method on Conjunctive which is a specialization of
-// Stream<Clause>.
-static bool clstream_eval(Stream<Clause>& g, const Assignment& assign) {
-	bool value = true;
-	for (auto cl : g)
-		value &= clause_eval(cl, assign);
-	return value;
-}
-
 static bool is_eqv(const Formula& f, CNF& g, std::string message = "") {
 	bool is_ok = true;
 	Assignment assign;
@@ -221,7 +203,7 @@ static bool is_eqv(const Formula& f, CNF& g, std::string message = "") {
 	g.is_caching() = true;
 	assign = f.assignment();
 	while (!assign.overflown()) {
-		is_ok &= f.eval(assign) == clstream_eval(g, assign);
+		is_ok &= f.eval(assign) == g.eval(assign);
 		if (!is_ok)
 			break;
 		++assign;
@@ -229,7 +211,7 @@ static bool is_eqv(const Formula& f, CNF& g, std::string message = "") {
 
 	if (!ok(is_ok, message)) {
 		diag("mismatched at assignment ", assign);
-		diag("  Got:      ", clstream_eval(g, assign));
+		diag("  Got:      ", g.eval(assign));
 		diag("  Expected: ", f.eval(assign));
 		diag("CNF clauses:");
 		for (auto cl : g)
@@ -255,7 +237,7 @@ static bool is_eqv(const Formula& f, Tseitin& g, std::string message = "") {
 		assign = g.project(lassign);
 		consistent = g.lift(assign) == lassign;
 		expected = consistent ? f.eval(assign) : false;
-		is_ok &= clstream_eval(g, lassign) == expected;
+		is_ok &= g.eval(lassign) == expected;
 		if (!is_ok)
 			break;
 		++lassign;
@@ -266,7 +248,7 @@ static bool is_eqv(const Formula& f, Tseitin& g, std::string message = "") {
 			diag("mismatched at consistent assignment ", assign);
 		else
 			diag("mismatched at inconsistent assignment ", lassign);
-		diag("  Got:      ", clstream_eval(g, lassign));
+		diag("  Got:      ", g.eval(lassign));
 		diag("  Expected: ", expected);
 		diag("Tseitin clauses:");
 		for (auto cl : g)
