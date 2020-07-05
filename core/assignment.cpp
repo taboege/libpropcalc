@@ -18,35 +18,6 @@ using namespace std;
 
 namespace Propcalc {
 
-VarMap::VarMap(vector<VarRef> vars) {
-	for (auto& v : vars) {
-		order.push_back(v);
-		vmap.insert({ v, false });
-	}
-}
-
-VarMap::VarMap(initializer_list<pair<VarRef, bool>> il) {
-	/* Order specified by the list */
-	for (auto& p : il) {
-		order.push_back(p.first);
-		vmap.insert(p);
-	}
-}
-
-bool VarMap::exists(VarRef var) const {
-	return vmap.count(var) > 0;
-}
-
-bool& VarMap::operator[](VarRef v) {
-	if (not vmap.count(v))
-		order.push_back(v);
-	return vmap[v];
-}
-
-bool VarMap::operator[](VarRef v) const {
-	return vmap.at(v);
-}
-
 Assignment Assignment::operator~(void) const {
 	Assignment neg(order);
 	for (auto& v : order)

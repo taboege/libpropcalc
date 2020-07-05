@@ -19,49 +19,10 @@
 
 #include <vector>
 #include <unordered_map>
-#include <unordered_set>
 
-#include <propcalc/domain.hpp>
+#include <propcalc/varmap.hpp>
 
 namespace Propcalc {
-	/**
-	 * VarMap represents a (partial) mapping from a collection of variables
-	 * to truth values. It is not tied to a Domain object but the variables
-	 * are totally ordered.
-	 */
-	class VarMap {
-	protected:
-		std::vector<VarRef> order;
-		std::unordered_map<VarRef, bool> vmap;
-
-	public:
-		/** Create a dummy assignment on no variables. */
-		VarMap(void) { }
-		/** Create the all-false assignment on the given variables. */
-		VarMap(std::vector<VarRef> vars);
-		/** Initialize the mapping with the given data. */
-		VarMap(std::initializer_list<std::pair<VarRef, bool>> il);
-
-		/** Whether a variable is referenced in the assignment at all. */
-		bool exists(VarRef var) const;
-
-		/** A const reference to the internal order of variables. */
-		const std::vector<VarRef>& vars(void) const { return order; }
-
-		/**
-		 * Return the bool associated with the given variable.
-		 * In the value-assignment form, a non-existent variable
-		 * is added (as the last variable). In the value-read form,
-		 * an std::out_of_range exception is thrown.
-		 */
-		bool& operator[](VarRef v);
-		bool  operator[](VarRef v) const;
-
-		bool operator==(const VarMap& b) const {
-			return order == b.order && vmap == b.vmap;
-		}
-	};
-
 	/**
 	 * Assignment is a VarMap used as input to Formula evaluation.
 	 * It is not tied to a Domain object and remains only a partial

@@ -15,8 +15,9 @@
 #ifndef PROPCALC_CONJUNCTIVE_HPP
 #define PROPCALC_CONJUNCTIVE_HPP
 
-#include <propcalc/assignment.hpp>
+#include <propcalc/varmap.hpp>
 #include <propcalc/stream.hpp>
+#include <propcalc/assignment.hpp>
 
 namespace Propcalc {
 	/**

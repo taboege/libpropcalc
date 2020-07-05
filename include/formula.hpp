@@ -109,15 +109,12 @@ namespace Propcalc {
 		 */
 		std::vector<VarRef> vars(void) const;
 
-		/** Return an empty assignment */
+		/** Return a default assignment for the contained variables. */
 		Assignment assignment(void) const {
 			return Assignment(vars());
 		}
 
-		/**
-		 * Evaluate the root Ast node on the assignment. The same comments
-		 * apply.
-		 */
+		/** Evaluate the root Ast node on the assignment. The same comments apply. */
 		bool eval(const Assignment& assign) const { return root->eval(assign); }
 
 		/**
