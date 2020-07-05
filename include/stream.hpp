@@ -115,10 +115,14 @@ namespace Propcalc {
 		 * from a `nullptr`, which stands for the `end` iterator of a
 		 * Stream<T> range.
 		 */
-		bool operator!=(iterator& b) const {
+		bool operator!=(const iterator& b) const {
 			if (!b.st)
 				return idx < st->size() || !!*st;
 			throw X::Stream::Comparison();
+		}
+
+		bool operator==(const iterator& b) const {
+			return not (*this != b);
 		}
 
 		T operator*(void) const {
